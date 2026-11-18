@@ -124,14 +124,15 @@
       </div>
       <div class="scene">${hero}<div class="scene__corner"></div></div>
 
-      <p class="lead"><b>Привет, ${esc(userName)}! Это Тайный Санта ${nb("Р-СТРОЙ")}!</b><br>Надеемся, новогодние подарки тебя порадуют.</p>
+      <p class="lead"><b>Привет, ${esc(userName)}!</b><br>Это Тайный Санта ${nb("Р-СТРОЙ")} — наша новогодняя игра. В ней каждый становится немного волшебником: тайно готовит подарок одному коллеге и сам получает сюрприз от кого-то другого. От кого — узнаешь только в праздник.</p>
 
       <div class="section">
         <div class="section__head"><span class="section__title">Какие правила?</span></div>
         <ol class="rules">
-          <li><b>Напиши, что хочешь получить.</b> Это увидит только тот, кто будет тебе дарить.</li>
-          <li><b>${fmtDate(G.drawDate)} узнаешь, кому даришь ты.</b> Придёт сообщение в Telegram.</li>
-          <li><b>Купи подарок до ${money(G.budget)}</b> и вручи его ${fmtDate(G.exchangeDate)} ${G.place}.</li>
+          <li><b>Расскажи о своих желаниях.</b> Напиши 2–3 идеи подарка — их прочитает только твой Тайный Санта.</li>
+          <li><b>${fmtDate(G.drawDate)} узнай, кому даришь ты.</b> Придёт сообщение в Telegram с именем коллеги и его пожеланиями.</li>
+          <li><b>Подготовь подарок до ${money(G.budget)}.</b> Упакуй и подпиши имя получателя, а своё — не пиши.</li>
+          <li><b>${fmtDate(G.exchangeDate)} вручи подарок ${G.place}.</b> Положи его под ёлку — и смотри, как случается чудо.</li>
         </ol>
       </div>
 
@@ -139,12 +140,13 @@
         <div class="section__head"><span class="section__title">Твои возможности</span></div>
         <div class="paper">
           <div class="fact"><span class="fact__ic">${icon("list")}</span><span>Рассказать, какой подарок тебя обрадует</span></div>
-          <div class="fact"><span class="fact__ic">${icon("gift")}</span><span>Узнать, кому даришь, и что он(а) хочет</span></div>
+          <div class="fact"><span class="fact__ic">${icon("gift")}</span><span>Узнать, кому даришь, и что хочет получить подопечный</span></div>
           <div class="fact"><span class="fact__ic">${icon("check")}</span><span>Отметить, что подарок готов</span></div>
         </div>
       </div>
 
-      <div class="section note">${icon("secret")}<div><b>Главное правило — тайна.</b> Никому не говори, кому даришь подарок.</div></div>
+      <div class="section note">${icon("secret")}<div><b>Главное — сохранить тайну.</b> Никому не рассказывай, кому даришь, до самого праздника. В этом вся магия.</div></div>
+      <p class="hint">${icon("help", "i--sm")}Участие — по желанию. Если что-то непонятно, напиши организатору.</p>
     `);
     setMain("Поехали!", () => goStep("wishlist"));
   }
@@ -156,17 +158,17 @@
     mount(`
       ${masthead()}
       ${stepper(1, "Твои пожелания")}
-      <h1>Что ты хочешь получить?</h1>
-      <p class="lead">Напиши 2–3 идеи — каждую с новой строки. Так твоему Санте будет проще выбрать подарок.</p>
+      <h1>О чём ты мечтаешь в этом году?</h1>
+      <p class="lead">Напиши 2–3 идеи — каждую с новой строки. Чем конкретнее, тем легче Санте угадать: можно добавить любимый цвет или размер.</p>
 
       <div class="section paper paper--pad">
         <label class="field">
-          <span class="field__label">Я буду рад(а)</span>
-          <textarea class="textarea textarea--big" id="w-wishes" placeholder="Например:&#10;тёплый шарф&#10;книга о рыбалке&#10;хороший чай">${esc(state.wishes)}</textarea>
+          <span class="field__label">Мне будет приятно получить</span>
+          <textarea class="textarea textarea--big" id="w-wishes" placeholder="Например:&#10;тёплый плед в клетку&#10;хороший чай&#10;книга о путешествиях">${esc(state.wishes)}</textarea>
         </label>
         <label class="field">
-          <span class="field__label">Мне лучше не дарить (можно пропустить)</span>
-          <textarea class="textarea" id="w-not" placeholder="Например: сладкое, духи">${esc(state.notWanted)}</textarea>
+          <span class="field__label">Лучше не дарить (можно пропустить)</span>
+          <textarea class="textarea" id="w-not" placeholder="Например: сладкое — аллергия; духи">${esc(state.notWanted)}</textarea>
         </label>
       </div>
       <p class="hint">${icon("bulb", "i--sm")}После сохранения поменять пожелания можно только через организатора.</p>
@@ -176,7 +178,7 @@
       const wishes = document.getElementById("w-wishes").value.trim();
       const notWanted = document.getElementById("w-not").value.trim();
       if (!wishes) { haptic("error"); toast("Напиши хотя бы одно пожелание"); document.getElementById("w-wishes").focus(); return; }
-      confirmDialog("Сохранить пожелания? Потом поменять их можно только через организатора.", () => {
+      confirmDialog("Всё верно? Пожелания отправятся твоему Санте. Поменять их потом можно только через организатора.", () => {
         state.wishes = wishes; state.notWanted = notWanted;
         haptic("success");
         goStep("waiting");
@@ -194,8 +196,8 @@
       ${stepper(2, "Ждём жеребьёвку")}
       <div class="bigstate">
         <div class="bigstate__ic">${icon("check")}</div>
-        <h1>Отлично! Ты всё сделал(а) правильно!</h1>
-        <p class="lead">Теперь ждём жеребьёвку — <b>${fmtDate(G.drawDate)}</b>${d ? `, через ${d} ${plural(d, ["день", "дня", "дней"])}` : ""}. В этот день придёт сообщение в Telegram: кому ты даришь подарок.</p>
+        <h1>Отлично! Ты всё делаешь правильно ✨</h1>
+        <p class="lead">Твои пожелания уже у Санты. <b>${fmtDate(G.drawDate)}</b>${d ? ` (через ${d} ${plural(d, ["день", "дня", "дней"])})` : ""} придёт сообщение, кому даришь ты. А пока можно присматриваться к идеям и ждать чуда.</p>
       </div>
 
       ${state.wishes ? `<div class="section">
@@ -225,7 +227,7 @@
       ${stepper(3, "Кому ты даришь")}
       <div class="draw">
         <h1>Жеребьёвка прошла!</h1>
-        <p class="lead" style="text-align:center">Нажми кнопку внизу — узнаешь, кому даришь подарок.</p>
+        <p class="lead" style="text-align:center">Имена перемешаны и разлетелись по адресам. Нажми кнопку — узнаешь, для кого ты Санта в этом году.</p>
         <div class="pipe-stage">
           ${pipe}
           <div class="gift-box" id="gift" aria-live="polite">
@@ -286,8 +288,16 @@
           ${r.notWanted ? `<div class="kv"><div class="kv__k" style="color:var(--red)">${icon("ban", "i--sm")}Не дарить</div><div class="kv__v">${esc(r.notWanted)}</div></div>` : ""}
         </div>
       </div>
-      <div class="section">${facts()}</div>
-      <div class="section note">${icon("secret")}<div><b>Это секрет.</b> Никому не говори, кому даришь подарок.</div></div>`;
+      <div class="section">
+        <div class="section__head"><span class="section__title">Подсказки Санте</span></div>
+        <div class="paper">
+          <div class="fact"><span class="fact__ic">${icon("list")}</span><span>Перечитай пожелания ещё раз перед покупкой</span></div>
+          <div class="fact"><span class="fact__ic">${icon("wallet")}</span><span>Держись бюджета — до ${money(G.budget)}</span></div>
+          <div class="fact"><span class="fact__ic">${icon("gift")}</span><span>Подпиши «Для ${esc(r.forName || r.name.split(" ")[0])}», свою подпись не ставь</span></div>
+          <div class="fact"><span class="fact__ic">${icon("calendar")}</span><span>Вручи ${fmtDate(G.exchangeDate)} ${G.place}</span></div>
+        </div>
+      </div>
+      <div class="section note">${icon("secret")}<div><b>Тсс… это секрет до ${fmtDate(G.exchangeDate)}.</b></div></div>`;
   }
 
   function renderRecipient() {
@@ -305,7 +315,7 @@
       <div class="bigstate">
         <div class="bigstate__ic">${icon("gift")}</div>
         <h1>Ура! Подарок готов!</h1>
-        <p class="lead">Ты молодец! Осталось вручить его <b>${fmtDate(G.exchangeDate)}</b> ${G.place}. Не забудь упаковать и подписать имя получателя.</p>
+        <p class="lead">Ты молодец! <b>${fmtDate(G.exchangeDate)}</b> положи подарок под ёлку ${G.place}. Скоро и тебя найдёт сюрприз от твоего Санты.</p>
       </div>
       ${recipientCard()}
     `);
