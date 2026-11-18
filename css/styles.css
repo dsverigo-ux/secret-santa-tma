@@ -513,3 +513,5 @@ body.has-fallback-back .app { padding-top: 60px; }
 .simple .recipient h1 { font-size: 26px; margin-top: 4px; }
 .simple .draw h1 { font-size: 26px; }
 .fallback-main .btn { font-size: 15px; padding: 19px; }
+
+.title-block__date { display: none; }

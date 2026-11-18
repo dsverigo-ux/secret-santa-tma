@@ -549,3 +549,103 @@
 [data-theme="cozy"] .doc-head.recipient h1 { color: var(--cream); }
 [data-theme="cozy"] .bigstate__ic { background: var(--pink); color: var(--ink-c); }
 [data-theme="frost"] .doc-head { color: #fff; }
+
+/* ================= 9. КРИСТАЛЛ (перелив, стеклянная снежинка) ================= */
+[data-theme="crystal"] {
+  --navy-deep: #1f2f5c; --ice-ink: #1d2b52; --red: #c8352b; --red-2: #d94a3f;
+  --on-navy-2: rgba(255, 255, 255, .72); --champagne: #e9f6ff;
+  --f-wide: "Cormorant Garamond", Georgia, serif; --f-script: "Cormorant Garamond", Georgia, serif;
+  --r: 20px; --r-sm: 14px;
+  --glass: rgba(255, 255, 255, .62); --glass-line: rgba(255, 255, 255, .7);
+}
+[data-theme="crystal"] body {
+  color: #fff;
+  background:
+    radial-gradient(60% 45% at 100% 0%, rgba(214, 196, 240, .95) 0%, transparent 70%),
+    radial-gradient(50% 40% at 75% 55%, rgba(170, 236, 242, .75) 0%, transparent 70%),
+    radial-gradient(45% 35% at 40% 62%, rgba(244, 222, 232, .55) 0%, transparent 70%),
+    radial-gradient(70% 60% at 0% 40%, #2c5470 0%, transparent 75%),
+    linear-gradient(165deg, #3d6585 0%, #56789d 38%, #6f8cb3 62%, #2a3d6e 88%, #1f2f5c 100%);
+  background-attachment: fixed;
+}
+[data-theme="crystal"] .sky { opacity: 0; }
+[data-theme="crystal"] .grain { opacity: .12; }
+[data-theme="crystal"] .snowfall i { background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, .8); }
+/* вертикальная подпись по краю, как в постере */
+[data-theme="crystal"] body::after {
+  content: "р-строй · зима 2027"; position: fixed; left: 2px; bottom: 110px; z-index: 0;
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  font: 300 13px "Manrope", sans-serif; letter-spacing: .08em; color: rgba(255, 255, 255, .4); pointer-events: none;
+}
+
+/* типографика: тонкая высокая антиква */
+[data-theme="crystal"] h1, [data-theme="crystal"] .title-block__wide, [data-theme="crystal"] .ticket__title, [data-theme="crystal"] .tile__value {
+  font-family: var(--f-wide); font-weight: 500; letter-spacing: -.01em;
+}
+[data-theme="crystal"] .title-block { margin-top: 2px; }
+[data-theme="crystal"] .title-block__wide {
+  font-size: 96px; line-height: .82; letter-spacing: -.02em; text-transform: uppercase;
+  background: linear-gradient(90deg, #a9c3d9 0%, #e8eef8 60%, #ffffff 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+[data-theme="crystal"] .title-block__script { font-size: 22px; font-style: normal; font-family: "Manrope", sans-serif; font-weight: 300; letter-spacing: .02em; color: rgba(255, 255, 255, .85); margin: 0 0 4px 4px; }
+[data-theme="crystal"] .title-block__note { display: none; }
+[data-theme="crystal"] .title-block__date { display: block; position: absolute; right: 0; bottom: -16px; font: 300 15px "Manrope", sans-serif; letter-spacing: .02em; color: rgba(255, 255, 255, .85); }
+[data-theme="crystal"] .lead, [data-theme="crystal"] .rules li, [data-theme="crystal"] .simple h1, [data-theme="crystal"] .section__title { text-shadow: 0 1px 14px rgba(20, 40, 80, .35); }
+[data-theme="crystal"] .masthead { border-color: rgba(255, 255, 255, .35); color: rgba(255, 255, 255, .8); font-weight: 400; }
+[data-theme="crystal"] .masthead b { font-family: "Manrope", sans-serif; font-weight: 600; letter-spacing: .12em; font-size: 11px; }
+[data-theme="crystal"] .masthead__dot { background: var(--red); }
+[data-theme="crystal"] .simple h1 { font-size: 36px; line-height: 1.02; color: #fff; text-transform: none; }
+[data-theme="crystal"] .lead { font-weight: 400; color: rgba(255, 255, 255, .92); }
+[data-theme="crystal"] .lead b { font-weight: 700; color: #fff; }
+[data-theme="crystal"] .section__title { font-family: "Manrope", sans-serif; font-weight: 300; font-size: 20px; letter-spacing: .02em; text-transform: lowercase; color: #fff; }
+[data-theme="crystal"] .section__title::before { width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
+
+/* сцена — без рамки, снежинка «выходит» за край */
+[data-theme="crystal"] .scene { background: transparent; border: 0; overflow: visible; aspect-ratio: 360 / 300; margin: -40px -16px -20px 0; }
+[data-theme="crystal"] .scene svg { overflow: visible; }
+[data-theme="crystal"] .title-block__wide { font-size: 88px; }
+[data-theme="crystal"] .scene__corner { display: none; }
+
+/* стеклянные карточки с тёмно-синим текстом — читаемо */
+[data-theme="crystal"] .paper, [data-theme="crystal"] .tile, [data-theme="crystal"] .msg--in, [data-theme="crystal"] .note {
+  background: var(--glass); color: var(--ice-ink); border: 1px solid var(--glass-line);
+  -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%);
+  box-shadow: 0 20px 40px -26px rgba(20, 40, 80, .6);
+}
+[data-theme="crystal"] .note { border-style: solid; }
+[data-theme="crystal"] .note .i { color: var(--red); }
+[data-theme="crystal"] .list__sub, [data-theme="crystal"] .paper .muted, [data-theme="crystal"] .kv__k, [data-theme="crystal"] .field__label { color: #5a6a8c; }
+[data-theme="crystal"] .list__item + .list__item, [data-theme="crystal"] .wish + .wish, [data-theme="crystal"] .kv + .kv, [data-theme="crystal"] .fact + .fact { border-color: rgba(29, 43, 82, .1); }
+[data-theme="crystal"] .fact__ic, [data-theme="crystal"] .list__icon { background: rgba(255, 255, 255, .7); color: var(--ice-ink); box-shadow: inset 0 0 0 1px rgba(29, 43, 82, .12); }
+[data-theme="crystal"] .wish__num { color: var(--red); font-family: var(--f-wide); font-weight: 600; font-size: 18px; }
+[data-theme="crystal"] .facts { color: var(--ice-ink); }
+[data-theme="crystal"] .input, [data-theme="crystal"] .textarea { background: rgba(255, 255, 255, .7); color: var(--ice-ink); border-color: transparent; }
+[data-theme="crystal"] .input:focus, [data-theme="crystal"] .textarea:focus { border-color: #6aa6c8; background: #fff; }
+
+/* шаги и правила */
+[data-theme="crystal"] .stepper__n { color: #fff; } [data-theme="crystal"] .stepper__label { color: #fff; opacity: .8; }
+[data-theme="crystal"] .stepper__bar { background: rgba(255, 255, 255, .3); }
+[data-theme="crystal"] .stepper__bar i { background: linear-gradient(90deg, #fff, #c9ecf7); }
+[data-theme="crystal"] .rules li { color: rgba(255, 255, 255, .92); }
+[data-theme="crystal"] .rules li b { color: #fff; }
+[data-theme="crystal"] .rules li::before {
+  background: rgba(255, 255, 255, .25); color: #fff; border: 1px solid rgba(255, 255, 255, .7);
+  font-family: var(--f-wide); font-weight: 600; font-size: 20px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+[data-theme="crystal"] .hint { color: #fff; opacity: .8; }
+[data-theme="crystal"] .bigstate__ic { background: rgba(255, 255, 255, .3); border: 1px solid #fff; box-shadow: 0 0 40px rgba(255, 255, 255, .5); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+
+/* карточка подопечного */
+[data-theme="crystal"] .doc-head {
+  background: linear-gradient(140deg, rgba(31, 47, 92, .85), rgba(61, 101, 133, .7)); border: 1px solid rgba(255, 255, 255, .4);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); color: #fff;
+}
+[data-theme="crystal"] .doc-head::before { content: none; }
+[data-theme="crystal"] .doc-head::after { background: var(--red); width: 34px; height: 34px; }
+[data-theme="crystal"] .doc-head h1 { font-size: 34px; }
+[data-theme="crystal"] .avatar--lg { box-shadow: 0 0 0 4px rgba(255, 255, 255, .5); }
+
+/* кнопки — светлое стекло */
+[data-theme="crystal"] .btn--primary { background: #fff; color: #1f2f5c; box-shadow: 0 10px 30px -10px rgba(20, 40, 80, .5); }
+[data-theme="crystal"] .fallback-main { background: linear-gradient(to top, rgba(31, 47, 92, .55) 40%, transparent); }
+[data-theme="crystal"] .demo-link { color: #fff; }
