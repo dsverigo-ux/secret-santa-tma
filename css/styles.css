@@ -122,8 +122,8 @@ h3 { font-size: 14px; }
   position: absolute; left: 14px; bottom: 12px; right: 70px;
   font-size: 12px; color: rgba(255, 255, 255, .8); line-height: 1.35;
 }
-.swing { transform-origin: 236px 34px; animation: swing 4s ease-in-out infinite; }
-@keyframes swing { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+.flame { transform-origin: 84px 52px; animation: flicker 1.6s ease-in-out infinite; }
+@keyframes flicker { 0%, 100% { transform: scale(1, 1); } 30% { transform: scale(.94, 1.08); } 60% { transform: scale(1.05, .95); } }
 .blink { animation: blink 2.4s ease-in-out infinite; }
 .blink:nth-child(2n) { animation-delay: .8s; }
 .blink:nth-child(3n) { animation-delay: 1.6s; }
@@ -356,17 +356,22 @@ h3 { font-size: 14px; }
 .draw { text-align: center; padding-top: 6px; }
 .draw h1 { font-size: 26px; }
 .draw .script { font-size: 34px; display: block; margin-top: 2px; }
-.crane-stage { position: relative; height: 111.2cqw; max-height: 560px; margin-top: 4px; container-type: inline-size; }
-.crane-stage svg.crane { position: absolute; left: 0; top: 0; width: 100%; height: auto; }
-.cable { position: absolute; left: 63.9%; top: 12.2cqw; width: 2px; height: 70px; background: rgba(255, 255, 255, .7); transform: translateX(-1px); animation: lower 1.4s cubic-bezier(.3, .7, .3, 1) both; }
-@keyframes lower { from { height: 0; } }
+.pipe-stage { position: relative; height: 80cqw; max-height: 420px; margin-bottom: 34px; container-type: inline-size; }
+.pipe-stage svg.pipe { position: absolute; left: 0; top: 0; width: 100%; height: auto; }
+.valve { transform-origin: 47px 78px; animation: turn 1.4s cubic-bezier(.3, .7, .3, 1) both; }
+@keyframes turn { from { transform: rotate(-270deg); } }
 .gift-box {
-  position: absolute; left: 63.9%; top: calc(12.2cqw + 66px); width: 180px; height: 180px; margin-left: -90px;
-  cursor: pointer; perspective: 900px; transform-origin: 50% -70px;
-  animation: drop 1.4s cubic-bezier(.3, .7, .3, 1) both, sway 3.5s 1.4s ease-in-out infinite;
+  position: absolute; left: 75%; top: calc(70cqw - 150px); width: 150px; height: 150px; margin-left: -75px;
+  cursor: pointer; perspective: 900px; transform-origin: 50% 100%;
+  animation: emerge 1.3s .9s cubic-bezier(.25, .8, .3, 1.15) both, bob 3s 2.4s ease-in-out infinite;
 }
-@keyframes drop { from { transform: translateY(-140px); opacity: 0; } }
-@keyframes sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+@keyframes emerge {
+  0% { transform: translate(-28cqw, calc(-28cqw + 75px)) scale(.22); opacity: 0; }
+  20% { opacity: 1; }
+  65% { transform: translate(0, -36px) scale(1) rotate(6deg); }
+  100% { transform: none; }
+}
+@keyframes bob { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-2deg) translateY(-3px); } }
 .gift-box.is-open { animation: none; }
 .gift-box__inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .9s cubic-bezier(.2, .8, .2, 1); }
 .gift-box.is-open .gift-box__inner { transform: rotateY(180deg); }
@@ -385,8 +390,9 @@ h3 { font-size: 14px; }
   display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px;
   box-shadow: 0 24px 40px -14px rgba(0, 0, 0, .6); border-top: 4px solid var(--red);
 }
-.gift-box__back h2 { margin-top: 12px; }
-.tap-hint { position: absolute; left: 0; right: 0; bottom: 22px; font-size: 13px; color: var(--on-navy-2); }
+.gift-box__back h2 { margin-top: 10px; font-size: 16px; }
+.gift-box__label { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+.tap-hint { position: absolute; left: 0; right: 0; bottom: -24px; font-size: 13px; color: var(--on-navy-2); }
 
 .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
 .confetti i { position: absolute; top: -14px; width: 7px; height: 13px; border-radius: 1px; animation: fall linear forwards; }
