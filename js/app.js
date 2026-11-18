@@ -1,5 +1,6 @@
 /* =========================================================
-   Тайный Санта — Telegram Mini App (верстка + демо-логика)
+   Тайный Санта × Р-СТРОЙ — Telegram Mini App
+   Верстка + демо-логика (данные в js/data.js)
    ========================================================= */
 (() => {
   "use strict";
@@ -7,38 +8,42 @@
   const tg = window.Telegram && window.Telegram.WebApp;
   const inTelegram = !!(tg && tg.initData);
   const state = JSON.parse(JSON.stringify(window.MOCK));
+  const { icon, hero, crane } = window.ART;
   const $app = document.getElementById("app");
+  const BRAND = { navy: "#111b3a", red: "#b3261e" };
 
   /* ---------- Telegram: инициализация ---------- */
   if (inTelegram) {
-    document.documentElement.classList.add("tg");
     tg.ready();
     tg.expand();
-    tg.setHeaderColor && tg.setHeaderColor("bg_color");
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-      const u = tg.initDataUnsafe.user;
-      state.me.first_name = u.first_name;
-      state.me.photo = u.photo_url;
-    }
+    try {
+      tg.setHeaderColor(BRAND.navy);
+      tg.setBackgroundColor(BRAND.navy);
+      tg.setBottomBarColor && tg.setBottomBarColor(BRAND.navy);
+    } catch (e) { /* старые клиенты */ }
+    const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
+    if (u) { state.me.first_name = u.first_name; state.me.photo = u.photo_url; }
   }
 
   /* ---------- Утилиты ---------- */
   const esc = (s = "") => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const initials = name => name.split(/\s+/).map(p => p[0]).join("").slice(0, 2).toUpperCase();
   const fmtDate = iso => new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+  const fmtShort = iso => new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short" }).replace(".", "");
   const fmtMoney = (n, cur) => `${Number(n).toLocaleString("ru-RU")} ${cur}`;
   const daysLeft = iso => Math.max(0, Math.ceil((new Date(iso) - new Date()) / 864e5));
   const plural = (n, f) => f[(n % 10 === 1 && n % 100 !== 11) ? 0 : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? 1 : 2];
   const getGame = id => state.games.find(g => g.id === id);
+  const code = id => id.replace("g_", "");
   const avatar = (p, size = "") =>
-    `<div class="avatar ${size}" style="background:${p.color || "var(--pine)"}">${p.photo ? `<img src="${esc(p.photo)}" alt="">` : esc(initials(p.name || p.first_name))}</div>`;
+    `<div class="avatar ${size}" style="background:${p.color || "var(--navy-2)"}">${p.photo ? `<img src="${esc(p.photo)}" alt="">` : esc(initials(p.name || p.first_name))}</div>`;
+  const coverClass = (c, base) => (c === "red" ? `${base}--red` : c === "champ" ? `${base}--champ` : "");
 
   const haptic = (type = "light") => {
     if (!inTelegram || !tg.HapticFeedback) return;
     if (["success", "error", "warning"].includes(type)) tg.HapticFeedback.notificationOccurred(type);
     else tg.HapticFeedback.impactOccurred(type);
   };
-
   const toast = msg => {
     const el = document.getElementById("toast");
     el.textContent = msg;
@@ -46,7 +51,6 @@
     clearTimeout(toast.t);
     toast.t = setTimeout(() => el.classList.remove("is-visible"), 2200);
   };
-
   const confirmDialog = (text, cb) => {
     if (inTelegram && tg.showConfirm) tg.showConfirm(text, ok => ok && cb());
     else if (window.confirm(text)) cb();
@@ -62,7 +66,7 @@
     if (mainHandler && inTelegram) tg.MainButton.offClick(mainHandler);
     mainHandler = () => { haptic("medium"); handler(); };
     if (inTelegram) {
-      tg.MainButton.setParams({ text, is_visible: true, is_active: true });
+      tg.MainButton.setParams({ text, color: BRAND.red, text_color: "#ffffff", is_visible: true, is_active: true });
       tg.MainButton.onClick(mainHandler);
     } else {
       fbMainBtn.textContent = text;
@@ -71,18 +75,13 @@
     }
   }
   function hideMain() {
-    if (inTelegram) {
-      if (mainHandler) tg.MainButton.offClick(mainHandler);
-      tg.MainButton.hide();
-    } else fbMain.hidden = true;
+    if (inTelegram) { if (mainHandler) tg.MainButton.offClick(mainHandler); tg.MainButton.hide(); }
+    else fbMain.hidden = true;
     mainHandler = null;
   }
   function setBack(visible) {
     if (inTelegram) visible ? tg.BackButton.show() : tg.BackButton.hide();
-    else {
-      fbBack.hidden = !visible;
-      document.body.classList.toggle("has-fallback-back", visible);
-    }
+    else { fbBack.hidden = !visible; document.body.classList.toggle("has-fallback-back", visible); }
   }
   const goBack = () => (history.length > 1 ? history.back() : go(""));
   if (inTelegram) tg.BackButton.onClick(goBack);
@@ -91,98 +90,94 @@
   /* ---------- Роутер ---------- */
   const go = path => { location.hash = "#/" + path; };
   const routes = {
-    "": renderHome,
-    create: renderCreate,
-    invite: renderInvite,
-    game: renderGame,
-    wishlist: renderWishlist,
-    exclusions: renderExclusions,
-    draw: renderDraw,
-    recipient: renderRecipient,
-    chat: renderChat
+    "": renderHome, create: renderCreate, invite: renderInvite, game: renderGame,
+    wishlist: renderWishlist, exclusions: renderExclusions, draw: renderDraw,
+    recipient: renderRecipient, chat: renderChat
   };
-
   function router() {
     const [name = "", param] = location.hash.replace(/^#\/?/, "").split("/");
-    const view = routes[name] || renderHome;
     hideMain();
     setBack(name !== "");
     window.scrollTo(0, 0);
-    view(param);
+    (routes[name] || renderHome)(param);
   }
   window.addEventListener("hashchange", router);
-
-  // Делегирование кликов: data-go="route/param"
   $app.addEventListener("click", e => {
     const t = e.target.closest("[data-go]");
     if (t) { haptic("light"); go(t.dataset.go); }
   });
-
   const mount = html => { $app.innerHTML = `<section class="screen">${html}</section>`; };
+
+  const masthead = (right = "Зима 2027") => `
+    <div class="masthead">
+      <b>Р-СТРОЙ</b><span class="masthead__dot"></span><span>Тайный Санта</span><span class="masthead__dot"></span><span>${right}</span>
+    </div>`;
+
+  const listItem = ({ go: to, id, ic, red, title, sub, chev = true }) => `
+    <button class="list__item" ${to ? `data-go="${to}"` : ""} ${id ? `id="${id}"` : ""}>
+      <span class="list__icon ${red ? "list__icon--red" : ""}">${icon(ic)}</span>
+      <span class="list__body"><span class="list__title" style="display:block">${title}</span>${sub ? `<span class="list__sub">${sub}</span>` : ""}</span>
+      ${chev ? `<span class="chev">${icon("chev", "i--sm")}</span>` : ""}
+    </button>`;
 
   /* =======================================================
      1. Главная
      ======================================================= */
   function renderHome() {
-    const statusLabel = g => ({
-      registration: `Жеребьёвка ${fmtDate(g.drawDate)}`,
-      drawn: "Подопечный выбран",
+    const status = g => ({
+      registration: `Жеребьёвка ${fmtShort(g.drawDate)}`,
+      drawn: "Подопечный известен",
       finished: "Завершена"
     }[g.status]);
 
     mount(`
-      <header class="hero">
-        <div>
-          <div class="hero__hello">Привет, ${esc(state.me.first_name)} 👋</div>
-          <h1>Тайный Санта</h1>
-        </div>
-        ${avatar({ ...state.me, name: state.me.first_name })}
-      </header>
+      ${masthead()}
+      <div class="title-block">
+        <span class="title-block__script script">Тайный</span>
+        <div class="title-block__wide">Санта</div>
+        <div class="title-block__note">Строим<br>праздник<br>вместе</div>
+      </div>
+
+      <div class="scene">
+        ${hero}
+        <div class="scene__corner"></div>
+      </div>
 
       <div class="section">
-        <div class="section__head"><span class="section__title">Мои игры</span></div>
+        <div class="section__head">
+          <span class="section__title">Мои игры</span>
+          <span class="hello"><span class="hello__text">Привет, <b>${esc(state.me.first_name)}</b></span>${avatar({ ...state.me, name: state.me.first_name }, "avatar--sm")}</span>
+        </div>
         ${state.games.length ? state.games.map(g => `
-          <button class="game-card ${g.theme ? "game-card--" + g.theme : ""}" data-emoji="${g.emoji}"
-                  data-go="${g.status === "drawn" ? "recipient" : "game"}/${g.id}">
-            <span class="chip chip--status">${g.isOwner ? "👑 Организатор · " : ""}${statusLabel(g)}</span>
-            <div class="game-card__title">${esc(g.title)}</div>
-            <div class="game-card__meta">
-              <span class="chip">💰 до ${fmtMoney(g.budget, g.currency)}</span>
-              <span class="chip">👥 ${g.participants.length}</span>
-              <span class="chip">📅 ${fmtDate(g.exchangeDate)}</span>
+          <button class="ticket ${coverClass(g.cover, "ticket")}" data-go="${g.status === "drawn" ? "recipient" : "game"}/${g.id}">
+            <div class="ticket__top">
+              <span class="badge ${g.status === "drawn" ? "badge--champ" : ""}">${g.isOwner ? icon("crown", "i--sm") : ""}${status(g)}</span>
+              <span class="ticket__code">№ ${code(g.id)}</span>
+            </div>
+            <div class="ticket__title">${esc(g.title)}</div>
+            <div class="ticket__meta">
+              <span>${icon("wallet", "i--sm")}до ${fmtMoney(g.budget, g.currency)}</span>
+              <span>${icon("users", "i--sm")}${g.participants.length}</span>
+              <span>${icon("gift", "i--sm")}${fmtShort(g.exchangeDate)}</span>
             </div>
           </button>`).join("") : `
-          <div class="card empty">
-            <div class="empty__emoji">🎁</div>
-            <h2>Пока нет игр</h2>
-            <p class="muted">Создайте игру и пригласите друзей или вступите по ссылке</p>
+          <div class="paper empty">
+            <h2 style="color:var(--ink)">Пока нет игр</h2>
+            <p>Создайте игру и пригласите коллег или вступите по ссылке</p>
           </div>`}
       </div>
 
       <div class="section">
         <div class="section__head"><span class="section__title">Вступить по коду</span></div>
-        <div class="card">
-          <div class="input-group">
-            <input class="input" id="join-code" placeholder="Например, DRUZ" maxlength="12" autocapitalize="characters" />
-            <button class="btn btn--ghost" id="join-btn">Найти</button>
-          </div>
-          <p class="small muted" style="margin:10px 4px 0">Или откройте ссылку-приглашение от организатора</p>
+        <div class="input-group">
+          <input class="input input--dark" id="join-code" placeholder="Например, FAM" maxlength="12" autocapitalize="characters" />
+          <button class="btn btn--outline" id="join-btn">Найти</button>
         </div>
       </div>
 
-      <div class="section">
-        <div class="list">
-          <button class="list__item" data-go="invite">
-            <span style="font-size:22px">✉️</span>
-            <div class="list__body"><div class="list__title">Демо: экран приглашения</div><div class="list__sub">Как выглядит вход по ссылке</div></div>
-            <span class="chev">›</span>
-          </button>
-          <button class="list__item" id="how-btn">
-            <span style="font-size:22px">❓</span>
-            <div class="list__body"><div class="list__title">Как это работает</div><div class="list__sub">Правила в трёх шагах</div></div>
-            <span class="chev">›</span>
-          </button>
-        </div>
+      <div class="section paper">
+        ${listItem({ go: "invite", ic: "link", title: "Демо: приглашение", sub: "Как выглядит вход по ссылке" })}
+        ${listItem({ id: "how-btn", ic: "help", title: "Как это работает", sub: "Правила в трёх шагах" })}
       </div>
     `);
 
@@ -198,75 +193,74 @@
      2. Создание игры
      ======================================================= */
   function renderCreate() {
-    const emojis = ["🎄", "🎅", "❄️", "🎁", "⛄", "🦌"];
-    const today = new Date();
     const iso = d => d.toISOString().slice(0, 10);
-    const d1 = new Date(today); d1.setDate(d1.getDate() + 14);
-    const d2 = new Date(today); d2.setDate(d2.getDate() + 30);
+    const d1 = new Date(); d1.setDate(d1.getDate() + 14);
+    const d2 = new Date(); d2.setDate(d2.getDate() + 30);
 
     mount(`
-      <h1>Новая игра</h1>
-      <p class="muted">Заполните основное — остальное можно поменять позже</p>
+      ${masthead("Новая игра")}
+      <h1>Новая <span class="script" style="font-size:34px">игра</span></h1>
+      <p class="muted" style="margin:6px 0 0">Основное — сейчас, остальное можно изменить позже</p>
 
       <div class="section">
-        <label class="field">
-          <span class="field__label">Название</span>
-          <input class="input" id="f-title" placeholder="Например, Новый год в отделе" maxlength="60" />
-        </label>
-
-        <div class="field">
-          <span class="field__label">Обложка</span>
-          <div class="emoji-pick">
-            ${emojis.map((e, i) => `<label><input type="radio" name="emoji" value="${e}" ${i ? "" : "checked"}><span>${e}</span></label>`).join("")}
-          </div>
-        </div>
-
-        <label class="field">
-          <span class="field__label">Бюджет подарка</span>
-          <div class="input-group">
-            <input class="input" id="f-budget" type="number" inputmode="numeric" placeholder="3000" />
-            <select class="select" id="f-cur"><option>₽</option><option>$</option><option>€</option></select>
-          </div>
-        </label>
-
-        <div class="row">
+        <div class="section__head"><span class="section__title">Основное</span></div>
+        <div class="paper paper--pad">
           <label class="field">
-            <span class="field__label">Жеребьёвка</span>
-            <input class="input" id="f-draw" type="date" value="${iso(d1)}" />
+            <span class="field__label">Название</span>
+            <input class="input" id="f-title" placeholder="Например, Новый год в ПТО" maxlength="60" />
           </label>
+          <div class="field">
+            <span class="field__label">Обложка</span>
+            <div class="cover-pick">
+              <label><input type="radio" name="cover" value="navy" checked><span class="c-navy" aria-label="Синяя"></span></label>
+              <label><input type="radio" name="cover" value="red"><span class="c-red" aria-label="Красная"></span></label>
+              <label><input type="radio" name="cover" value="champ"><span class="c-champ" aria-label="Шампань"></span></label>
+            </div>
+          </div>
           <label class="field">
-            <span class="field__label">Обмен подарками</span>
-            <input class="input" id="f-exchange" type="date" value="${iso(d2)}" />
+            <span class="field__label">Бюджет подарка</span>
+            <div class="input-group">
+              <input class="input" id="f-budget" type="number" inputmode="numeric" placeholder="3 000" />
+              <select class="select" id="f-cur"><option>₽</option><option>$</option><option>€</option></select>
+            </div>
           </label>
         </div>
+      </div>
 
-        <div class="field">
-          <span class="field__label">Формат</span>
-          <div class="segmented">
-            <label><input type="radio" name="format" value="offline" checked><span>🤝 Встреча</span></label>
-            <label><input type="radio" name="format" value="delivery"><span>📦 Доставка</span></label>
+      <div class="section">
+        <div class="section__head"><span class="section__title">Сроки и формат</span></div>
+        <div class="paper paper--pad">
+          <div class="row">
+            <label class="field"><span class="field__label">Жеребьёвка</span><input class="input" id="f-draw" type="date" value="${iso(d1)}" /></label>
+            <label class="field"><span class="field__label">Обмен</span><input class="input" id="f-exchange" type="date" value="${iso(d2)}" /></label>
           </div>
+          <div class="field">
+            <span class="field__label">Формат</span>
+            <div class="segmented">
+              <label><input type="radio" name="format" value="offline" checked><span>${icon("users", "i--sm")}Встреча</span></label>
+              <label><input type="radio" name="format" value="delivery"><span>${icon("box", "i--sm")}Доставка</span></label>
+            </div>
+          </div>
+          <label class="field">
+            <span class="field__label">Правила (необязательно)</span>
+            <textarea class="textarea" id="f-rules" placeholder="Например: упаковка обязательна"></textarea>
+          </label>
         </div>
-
-        <label class="field">
-          <span class="field__label">Правила и пожелания (необязательно)</span>
-          <textarea class="textarea" id="f-rules" placeholder="Например: упаковка обязательна, без алкоголя"></textarea>
-        </label>
       </div>
 
       <div class="section">
         <div class="section__head"><span class="section__title">Настройки</span></div>
-        <div class="list">
+        <div class="paper">
           <div class="switch-row">
             <div><div class="list__title">Я тоже участвую</div><div class="list__sub">Организатор получит подопечного</div></div>
             <label class="switch"><input type="checkbox" checked><span></span></label>
           </div>
           <div class="switch-row">
-            <div><div class="list__title">Анонимный чат</div><div class="list__sub">Санта может задавать вопросы подопечному</div></div>
+            <div><div class="list__title">Анонимный чат</div><div class="list__sub">Санта может задавать вопросы</div></div>
             <label class="switch"><input type="checkbox" checked><span></span></label>
           </div>
           <div class="switch-row">
-            <div><div class="list__title">Вишлист обязателен</div><div class="list__sub">Нельзя провести жеребьёвку без вишлистов</div></div>
+            <div><div class="list__title">Вишлист обязателен</div><div class="list__sub">Без него нельзя провести жеребьёвку</div></div>
             <label class="switch"><input type="checkbox"><span></span></label>
           </div>
         </div>
@@ -278,11 +272,10 @@
       const budget = +document.getElementById("f-budget").value;
       if (!title) { haptic("error"); toast("Введите название игры"); return; }
       if (!budget) { haptic("error"); toast("Укажите бюджет"); return; }
-      const id = "g_" + Math.random().toString(36).slice(2, 7).toUpperCase();
+      const id = "g_" + Math.random().toString(36).slice(2, 6).toUpperCase();
       state.games.unshift({
         id, title, budget,
-        emoji: document.querySelector("[name=emoji]:checked").value,
-        theme: "gold",
+        cover: document.querySelector("[name=cover]:checked").value,
         currency: document.getElementById("f-cur").value,
         drawDate: document.getElementById("f-draw").value,
         exchangeDate: document.getElementById("f-exchange").value,
@@ -295,7 +288,7 @@
       haptic("success");
       history.replaceState(null, "", "#/");
       go("game/" + id);
-      toast("Игра создана 🎉 Пригласите участников");
+      toast("Игра создана — пригласите участников");
     });
   }
 
@@ -306,37 +299,35 @@
     const g = state.invite;
     if (!g) { toast("Вы уже в этой игре"); return go(""); }
     mount(`
-      <div class="game-head">
-        <div class="game-head__emoji">${g.emoji}</div>
-        <p class="muted" style="margin:14px 0 4px">${esc(g.owner)} приглашает вас в игру</p>
+      ${masthead("Приглашение")}
+      <div class="doc-head ${coverClass(g.cover, "doc-head")}">
+        <div class="eyebrow">Официальное приглашение</div>
         <h1>${esc(g.title)}</h1>
+        <span class="script">от ${esc(g.owner)}</span>
       </div>
 
-      <div class="stats">
-        <div class="stat"><div class="stat__value">${fmtMoney(g.budget, g.currency)}</div><div class="stat__label">бюджет</div></div>
-        <div class="stat"><div class="stat__value">${g.count}</div><div class="stat__label">${plural(g.count, ["участник", "участника", "участников"])}</div></div>
-        <div class="stat"><div class="stat__value">${daysLeft(g.drawDate)} дн.</div><div class="stat__label">до жеребьёвки</div></div>
+      <div class="tiles">
+        <div class="tile"><div class="tile__label">Бюджет</div><div class="tile__value">${fmtMoney(g.budget, g.currency)}</div></div>
+        <div class="tile"><div class="tile__label">Участники</div><div class="tile__value">${g.count}</div></div>
+        <div class="tile tile--navy"><div class="tile__label">До жеребьёвки</div><div class="tile__value">${daysLeft(g.drawDate)} ${plural(daysLeft(g.drawDate), ["день", "дня", "дней"])}</div></div>
       </div>
 
-      <div class="section">
-        <div class="list">
-          <div class="list__item"><span style="font-size:20px">🎲</span><div class="list__body"><div class="list__sub">Жеребьёвка</div><div class="list__title">${fmtDate(g.drawDate)}</div></div></div>
-          <div class="list__item"><span style="font-size:20px">🎁</span><div class="list__body"><div class="list__sub">Обмен подарками</div><div class="list__title">${fmtDate(g.exchangeDate)}</div></div></div>
-        </div>
+      <div class="section paper">
+        <div class="kv"><div class="kv__k">${icon("shuffle", "i--sm")}Жеребьёвка</div><div class="kv__v">${fmtDate(g.drawDate)}</div></div>
+        <div class="kv"><div class="kv__k">${icon("gift", "i--sm")}Обмен подарками</div><div class="kv__v">${fmtDate(g.exchangeDate)}</div></div>
       </div>
 
-      <div class="section callout">
-        <div class="callout__icon">🤫</div>
-        <div class="small">Никто, кроме вас, не узнает, кому вы дарите подарок. Организатор тоже не видит пары.</div>
-      </div>
+      <div class="section note">${icon("secret")}<div>Никто, кроме вас, не узнает, кому вы дарите подарок. Организатор тоже не видит пары.</div></div>
     `);
 
-    setMain("Участвую!", () => {
+    setMain("Участвую", () => {
+      const names = ["Никита Р.", "Аня Л.", "Петя М.", "Света Г.", "Дима Ф.", "Лена Ж.", "Костя Б.", "Юля Т."];
+      const colors = ["#b3261e", "#2a3d72", "#8a6d2b", "#3b5b8f"];
       state.games.push({
-        id: g.id, title: g.title, emoji: g.emoji, theme: "pine",
+        id: g.id, title: g.title, cover: g.cover,
         budget: g.budget, currency: g.currency, drawDate: g.drawDate, exchangeDate: g.exchangeDate,
         format: "offline", rules: "", isOwner: false, status: "registration", anonChat: true,
-        participants: Array.from({ length: g.count }, (_, i) => ({ id: 100 + i, name: ["Никита Р.", "Аня Л.", "Петя М.", "Света Г.", "Дима Ф.", "Лена Ж.", "Костя Б.", "Юля Т."][i] || "Гость", color: ["#c2362f", "#5b6ee1", "#d9a441", "#2a9d8f"][i % 4], wishlist: i % 3 !== 0 }))
+        participants: names.slice(0, g.count).map((name, i) => ({ id: 100 + i, name, color: colors[i % 4], wishlist: i % 3 !== 0 }))
           .concat([{ id: 1, name: state.me.first_name, color: state.me.color, wishlist: false }]),
         exclusions: []
       });
@@ -361,78 +352,69 @@
     const link = `https://t.me/secret_santa_bot/app?startapp=${g.id}`;
 
     mount(`
-      <div class="game-head">
-        <div class="game-head__emoji">${g.emoji}</div>
+      ${masthead("№ " + code(g.id))}
+      <div class="doc-head ${coverClass(g.cover, "doc-head")}">
+        <div class="eyebrow">${g.isOwner ? "Вы — организатор" : "Участник игры"}</div>
         <h1>${esc(g.title)}</h1>
-        ${g.isOwner ? `<p style="margin:8px 0 0"><span class="tag tag--accent">👑 Вы организатор</span></p>` : ""}
+        <span class="script">${g.format === "delivery" ? "подарки — доставкой" : "обмен на встрече"}</span>
       </div>
 
-      <div class="stats">
-        <div class="stat"><div class="stat__value">${fmtMoney(g.budget, g.currency)}</div><div class="stat__label">бюджет</div></div>
-        <div class="stat"><div class="stat__value">${fmtDate(g.drawDate).split(" ")[0]} ${fmtDate(g.drawDate).split(" ")[1].slice(0, 3)}</div><div class="stat__label">жеребьёвка</div></div>
-        <div class="stat"><div class="stat__value">${fmtDate(g.exchangeDate).split(" ")[0]} ${fmtDate(g.exchangeDate).split(" ")[1].slice(0, 3)}</div><div class="stat__label">обмен</div></div>
+      <div class="tiles">
+        <div class="tile"><div class="tile__label">Бюджет</div><div class="tile__value">${fmtMoney(g.budget, g.currency)}</div></div>
+        <div class="tile"><div class="tile__label">Жеребьёвка</div><div class="tile__value">${fmtShort(g.drawDate)}</div></div>
+        <div class="tile tile--navy"><div class="tile__label">Обмен</div><div class="tile__value">${fmtShort(g.exchangeDate)}</div></div>
       </div>
 
       ${me && !me.wishlist ? `
-      <div class="section callout" data-go="wishlist/${g.id}" style="cursor:pointer">
-        <div class="callout__icon">📝</div>
-        <div><b>Заполните вишлист</b><div class="small">Так Санте будет проще выбрать подарок</div></div>
+      <div class="section">
+        <button class="callout" data-go="wishlist/${g.id}">
+          ${icon("list")}<span style="flex:1"><b>Заполните вишлист</b><span class="small">Так Санте будет проще выбрать подарок</span></span>${icon("chev", "i--sm")}
+        </button>
       </div>` : ""}
 
       <div class="section">
         <div class="section__head"><span class="section__title">Приглашение</span></div>
-        <div class="invite">
-          <div class="invite__code">
-            <div class="list__title">Код: ${g.id.replace("g_", "")}</div>
+        <div class="paper invite">
+          <div class="invite__body">
+            <div class="invite__code">${code(g.id)}</div>
             <div class="invite__link">${link}</div>
           </div>
-          <button class="btn btn--ghost btn--sm" id="copy-btn">Копировать</button>
-          <button class="btn btn--primary btn--sm" id="share-btn">Позвать</button>
+          <button class="btn btn--soft btn--icon" id="copy-btn" aria-label="Копировать ссылку">${icon("copy")}</button>
+          <button class="btn btn--navy btn--sm" id="share-btn">${icon("send", "i--sm")}Позвать</button>
         </div>
       </div>
 
       <div class="section">
         <div class="section__head">
           <span class="section__title">Участники · ${g.participants.length}</span>
-          <span class="small muted">вишлисты ${filled}/${g.participants.length}</span>
+          <span class="section__aside">вишлисты ${filled}/${g.participants.length}</span>
         </div>
-        <div class="progress" style="margin:0 4px 10px"><span style="width:${filled / g.participants.length * 100}%"></span></div>
-        <div class="list">
+        <div class="progress"><span style="width:${filled / g.participants.length * 100}%"></span></div>
+        <div class="paper">
           ${g.participants.map(p => `
-            <div class="list__item">
+            <div class="list__item" style="cursor:default">
               ${avatar(p, "avatar--sm")}
-              <div class="list__body"><div class="list__title">${esc(p.name)}${p.id === 1 ? " (вы)" : ""}</div></div>
-              ${p.wishlist ? `<span class="tag tag--ok">✓ вишлист</span>` : `<span class="tag tag--warn">нет вишлиста</span>`}
+              <div class="list__body"><div class="list__title">${esc(p.name)}${p.id === 1 ? " · вы" : ""}</div></div>
+              ${p.wishlist ? `<span class="tag tag--ok">${icon("check", "i--sm")}вишлист</span>` : `<span class="tag tag--warn">нет вишлиста</span>`}
             </div>`).join("")}
         </div>
       </div>
 
-      <div class="section">
-        <div class="list">
-          <button class="list__item" data-go="wishlist/${g.id}">
-            <span style="font-size:20px">📝</span>
-            <div class="list__body"><div class="list__title">Мой вишлист</div></div><span class="chev">›</span>
-          </button>
-          ${g.isOwner ? `
-          <button class="list__item" data-go="exclusions/${g.id}">
-            <span style="font-size:20px">🚫</span>
-            <div class="list__body"><div class="list__title">Исключения</div><div class="list__sub">${g.exclusions.length ? g.exclusions.length + " " + plural(g.exclusions.length, ["пара", "пары", "пар"]) : "Кто не может дарить друг другу"}</div></div><span class="chev">›</span>
-          </button>
-          <button class="list__item" id="remind-btn">
-            <span style="font-size:20px">🔔</span>
-            <div class="list__body"><div class="list__title">Напомнить про вишлисты</div><div class="list__sub">Бот отправит сообщение тем, кто не заполнил</div></div>
-          </button>` : ""}
-        </div>
+      <div class="section paper">
+        ${listItem({ go: "wishlist/" + g.id, ic: "list", title: "Мой вишлист" })}
+        ${g.isOwner ? `
+          ${listItem({ go: "exclusions/" + g.id, ic: "ban", red: true, title: "Исключения", sub: g.exclusions.length ? `${g.exclusions.length} ${plural(g.exclusions.length, ["пара", "пары", "пар"])}` : "Кто не дарит друг другу" })}
+          ${listItem({ id: "remind-btn", ic: "bell", title: "Напомнить про вишлисты", sub: "Бот напишет тем, кто не заполнил", chev: false })}` : ""}
       </div>
 
       ${g.rules ? `
       <div class="section">
         <div class="section__head"><span class="section__title">Правила</span></div>
-        <div class="card">${esc(g.rules)}</div>
+        <div class="paper paper--pad">${esc(g.rules)}</div>
       </div>` : ""}
 
       <div class="section center">
-        <button class="btn btn--danger" id="leave-btn">${g.isOwner ? "Удалить игру" : "Выйти из игры"}</button>
+        <button class="btn btn--text" id="leave-btn">${g.isOwner ? "Удалить игру" : "Выйти из игры"}</button>
       </div>
     `);
 
@@ -441,7 +423,7 @@
       haptic("success"); toast("Ссылка скопирована");
     };
     document.getElementById("share-btn").onclick = () => {
-      const url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(`Присоединяйся к Тайному Санте «${g.title}» 🎁`)}`;
+      const url = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(`Присоединяйся к Тайному Санте «${g.title}»`)}`;
       inTelegram ? tg.openTelegramLink(url) : window.open(url, "_blank");
     };
     const remind = document.getElementById("remind-btn");
@@ -453,7 +435,7 @@
       });
 
     if (g.isOwner) {
-      setMain(`Провести жеребьёвку (${g.participants.length})`, () => {
+      setMain(`Провести жеребьёвку · ${g.participants.length}`, () => {
         if (g.participants.length < 3) { haptic("error"); toast("Нужно минимум 3 участника"); return; }
         confirmDialog("Провести жеребьёвку сейчас? После этого нельзя добавить участников.", () => go("draw/" + g.id));
       });
@@ -468,40 +450,44 @@
     const draw = () => {
       document.getElementById("wishes").innerHTML = w.wishes.length ? w.wishes.map((x, i) => `
         <div class="wish">
-          <div class="wish__num">${i + 1}</div>
+          <div class="wish__num">${String(i + 1).padStart(2, "0")}</div>
           <div class="wish__body">
             <div>${esc(x.text)}</div>
-            ${x.link ? `<a class="wish__link" href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.link)}</a>` : ""}
+            ${x.link ? `<a class="wish__link" href="${esc(x.link)}" target="_blank" rel="noopener">${icon("ext", "i--sm")}${esc(x.link.replace(/^https?:\/\/(www\.)?/, ""))}</a>` : ""}
           </div>
-          <button class="icon-btn" data-del="${i}" aria-label="Удалить">✕</button>
-        </div>`).join("") : `<div class="empty"><div class="muted">Добавьте хотя бы одно желание</div></div>`;
+          <button class="icon-btn" data-del="${i}" aria-label="Удалить">${icon("x", "i--sm")}</button>
+        </div>`).join("") : `<div class="empty">Добавьте хотя бы одно желание</div>`;
     };
 
     mount(`
-      <h1>Мой вишлист</h1>
-      <p class="muted">Его увидит только ваш Тайный Санта</p>
+      ${masthead("Вишлист")}
+      <h1>Мой <span class="script" style="font-size:34px">вишлист</span></h1>
+      <p class="muted" style="margin:6px 0 0">Его увидит только ваш Тайный Санта</p>
 
       <div class="section">
         <div class="section__head"><span class="section__title">Хочу получить</span></div>
-        <div class="list" id="wishes"></div>
-        <div class="card" style="margin-top:10px">
-          <input class="input" id="w-text" placeholder="Что бы вы хотели?" style="background:var(--bg-2);margin-bottom:8px" />
+        <div class="paper" id="wishes"></div>
+        <div class="paper paper--pad" style="margin-top:10px">
+          <input class="input" id="w-text" placeholder="Что бы вы хотели?" style="margin-bottom:8px" />
           <div class="input-group">
-            <input class="input" id="w-link" placeholder="Ссылка (необязательно)" style="background:var(--bg-2)" />
-            <button class="btn btn--primary" id="w-add" aria-label="Добавить">＋</button>
+            <input class="input" id="w-link" placeholder="Ссылка (необязательно)" />
+            <button class="btn btn--primary btn--icon" id="w-add" aria-label="Добавить">${icon("plus")}</button>
           </div>
         </div>
       </div>
 
       <div class="section">
-        <label class="field">
-          <span class="field__label">🚫 Не дарите мне</span>
-          <textarea class="textarea" id="w-not" placeholder="Аллергии, то, что уже есть">${esc(w.notWanted)}</textarea>
-        </label>
-        <label class="field">
-          <span class="field__label">💡 Подсказки для Санты</span>
-          <textarea class="textarea" id="w-hints" placeholder="Размер, любимые цвета, хобби">${esc(w.hints)}</textarea>
-        </label>
+        <div class="section__head"><span class="section__title">Подсказки Санте</span></div>
+        <div class="paper paper--pad">
+          <label class="field">
+            <span class="field__label">Не дарите мне</span>
+            <textarea class="textarea" id="w-not" placeholder="Аллергии, то, что уже есть">${esc(w.notWanted)}</textarea>
+          </label>
+          <label class="field">
+            <span class="field__label">Мне нравится</span>
+            <textarea class="textarea" id="w-hints" placeholder="Размер, любимые цвета, хобби">${esc(w.hints)}</textarea>
+          </label>
+        </div>
       </div>
     `);
     draw();
@@ -520,14 +506,14 @@
       if (b) { w.wishes.splice(+b.dataset.del, 1); haptic("light"); draw(); }
     });
 
-    setMain("Сохранить", () => {
+    setMain("Сохранить вишлист", () => {
       w.notWanted = document.getElementById("w-not").value;
       w.hints = document.getElementById("w-hints").value;
       const g = getGame(id);
       if (g) { const me = g.participants.find(p => p.id === 1); if (me) me.wishlist = w.wishes.length > 0; }
       if (inTelegram && tg.CloudStorage) tg.CloudStorage.setItem("wishlist", JSON.stringify(w));
       haptic("success"); toast("Вишлист сохранён");
-      g ? go("game/" + id) : goBack();
+      g && g.status !== "drawn" ? go("game/" + id) : goBack();
     });
   }
 
@@ -543,29 +529,31 @@
     const draw = () => {
       document.getElementById("pairs").innerHTML = g.exclusions.length ? g.exclusions.map(([a, b], i) => `
         <div class="pair">
-          ${avatar(byId(a), "avatar--sm")}<span>${esc(byId(a).name)}</span>
-          <span class="pair__x">✕</span>
-          ${avatar(byId(b), "avatar--sm")}<span style="flex:1">${esc(byId(b).name)}</span>
-          <button class="icon-btn" data-del="${i}" aria-label="Удалить">🗑</button>
-        </div>`).join("") : `<div class="empty"><div class="muted">Исключений нет — все могут выпасть всем</div></div>`;
+          ${avatar(byId(a), "avatar--sm")}<span class="pair__name">${esc(byId(a).name)}</span>
+          <span class="pair__x">${icon("ban", "i--sm")}</span>
+          ${avatar(byId(b), "avatar--sm")}<span class="pair__name">${esc(byId(b).name)}</span>
+          <button class="icon-btn" data-del="${i}" aria-label="Удалить">${icon("trash", "i--sm")}</button>
+        </div>`).join("") : `<div class="empty">Исключений нет — все могут выпасть всем</div>`;
     };
 
     mount(`
+      ${masthead("Исключения")}
       <h1>Исключения</h1>
-      <p class="muted">Эти участники не станут Сантами друг для друга — например, супруги или соседи по столу</p>
+      <p class="muted" style="margin:6px 0 0">Эти участники не станут Сантами друг для друга — например, супруги или коллеги из одного кабинета</p>
 
       <div class="section">
-        <div class="list" id="pairs"></div>
+        <div class="section__head"><span class="section__title">Пары</span></div>
+        <div class="paper" id="pairs"></div>
       </div>
 
       <div class="section">
         <div class="section__head"><span class="section__title">Добавить пару</span></div>
-        <div class="card">
+        <div class="paper paper--pad">
           <div class="row" style="margin-bottom:10px">
-            <select class="select" id="ex-a" style="background:var(--bg-2)">${opts}</select>
-            <select class="select" id="ex-b" style="background:var(--bg-2)">${opts}</select>
+            <select class="select" id="ex-a">${opts}</select>
+            <select class="select" id="ex-b">${opts}</select>
           </div>
-          <button class="btn btn--ghost btn--block" id="ex-add">Добавить исключение</button>
+          <button class="btn btn--navy btn--block" id="ex-add">${icon("plus", "i--sm")}Добавить</button>
         </div>
       </div>
     `);
@@ -587,7 +575,7 @@
   }
 
   /* =======================================================
-     7. Жеребьёвка
+     7. Жеребьёвка — кран опускает подарок
      ======================================================= */
   function renderDraw(id) {
     const g = getGame(id);
@@ -597,20 +585,25 @@
 
     mount(`
       <div class="draw">
-        <h1>Жеребьёвка проведена!</h1>
-        <p class="muted">Все участники получили уведомление от бота.<br>Нажмите на подарок, чтобы узнать подопечного</p>
+        <div class="eyebrow">Жеребьёвка проведена</div>
+        <h1 style="margin-top:8px">Ваш подарок</h1>
+        <span class="script">уже на подъёме</span>
 
-        <div class="gift-box" id="gift" role="button" tabindex="0" aria-label="Открыть подарок">
-          <div class="gift-box__inner">
-            <div class="gift-box__face"><span class="gift-box__bow">🎀</span></div>
-            <div class="gift-box__back">
-              <div class="small muted">Вы — Тайный Санта для</div>
-              <div style="margin:12px 0">${avatar(rec, "avatar--lg")}</div>
-              <h2>${esc(rec.name)}</h2>
+        <div class="crane-stage">
+          ${crane}
+          <div class="cable"></div>
+          <div class="gift-box" id="gift" role="button" tabindex="0" aria-label="Открыть подарок">
+            <div class="gift-box__inner">
+              <div class="gift-box__face"><span class="gift-box__tag">НАЖМИТЕ</span><span class="gift-box__corner"></span></div>
+              <div class="gift-box__back">
+                <div class="small muted" style="font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:10px">Вы — Санта для</div>
+                <div style="margin-top:12px">${avatar(rec, "avatar--sm")}</div>
+                <h2>${esc(rec.name)}</h2>
+              </div>
             </div>
           </div>
+          <div class="tap-hint" id="draw-hint">Все участники получили уведомление от бота</div>
         </div>
-        <p class="small muted" id="draw-hint">🤫 Никому не говорите!</p>
       </div>
     `);
 
@@ -618,16 +611,18 @@
     const open = () => {
       if (gift.classList.contains("is-open")) return;
       gift.classList.add("is-open");
+      document.getElementById("draw-hint").textContent = "Никому не говорите — это секрет";
       haptic("success");
       confetti();
-      g.status = "drawn";
-      g.giftStatus = 0;
-      g.recipient = {
-        ...rec,
-        wishes: [{ text: "Хорошая книга по истории" }, { text: "Термокружка", link: "https://market.yandex.ru" }],
-        notWanted: "Ничего с запахом",
-        hints: "Любит путешествовать"
-      };
+      Object.assign(g, {
+        status: "drawn", giftStatus: 0,
+        recipient: {
+          ...rec,
+          wishes: [{ text: "Хорошая книга по истории архитектуры" }, { text: "Термокружка для объекта", link: "https://market.yandex.ru" }],
+          notWanted: "Ничего с резким запахом",
+          hints: "Любит путешествовать и фотографировать"
+        }
+      });
       setMain("Посмотреть вишлист", () => { history.replaceState(null, "", "#/"); go("recipient/" + g.id); });
     };
     gift.addEventListener("click", open);
@@ -637,7 +632,7 @@
   function confetti() {
     const box = document.createElement("div");
     box.className = "confetti";
-    const colors = ["#c2362f", "#d9a441", "#1f5c45", "#ffffff", "#5b6ee1"];
+    const colors = ["#b3261e", "#ecd9a8", "#f3f4f8", "#2a3d72", "#d23a2f"];
     for (let i = 0; i < 70; i++) {
       const p = document.createElement("i");
       p.style.left = Math.random() * 100 + "%";
@@ -657,65 +652,56 @@
     const g = getGame(id);
     if (!g || !g.recipient) return go("");
     const r = g.recipient;
-    const steps = [["🛍", "Куплен"], ["📦", "Отправлен"], ["🎉", "Получен"]];
+    const steps = [["bag", "Куплен"], ["box", "Отправлен"], ["spark", "Получен"]];
+    const left = daysLeft(g.exchangeDate);
 
     mount(`
-      <div class="recipient">
-        <p class="small muted" style="margin:0 0 14px">${g.emoji} ${esc(g.title)}</p>
+      ${masthead("№ " + code(g.id))}
+      <div class="doc-head ${coverClass(g.cover, "doc-head")} recipient">
+        <div class="eyebrow">${esc(g.title)}</div>
         ${avatar(r, "avatar--lg")}
-        <p class="muted" style="margin:0">Вы дарите подарок</p>
-        <h1>${esc(r.name)}</h1>
-        <p style="margin:12px 0 0">
-          <span class="tag">💰 до ${fmtMoney(g.budget, g.currency)}</span>
-          <span class="tag">📅 ${fmtDate(g.exchangeDate)}</span>
-          <span class="tag tag--accent">⏳ ${daysLeft(g.exchangeDate)} ${plural(daysLeft(g.exchangeDate), ["день", "дня", "дней"])}</span>
-        </p>
+        <div class="eyebrow" style="letter-spacing:.14em">Вы — Тайный Санта для</div>
+        <h1 style="max-width:none;margin-top:6px">${esc(r.name)}</h1>
+        <div class="recipient__tags">
+          <span class="badge">${icon("wallet", "i--sm")}до ${fmtMoney(g.budget, g.currency)}</span>
+          <span class="badge">${icon("calendar", "i--sm")}${fmtShort(g.exchangeDate)}</span>
+          <span class="badge badge--champ">${left} ${plural(left, ["день", "дня", "дней"])}</span>
+        </div>
       </div>
 
       <div class="section">
         <div class="section__head"><span class="section__title">Статус подарка</span></div>
-        <div class="card">
-          <div class="timeline">
-            ${steps.map(([ic, label], i) => `
-              <div class="timeline__step ${g.giftStatus > i ? "is-done" : ""}">
-                <div class="timeline__dot">${g.giftStatus > i ? "✓" : ic}</div>${label}
-              </div>`).join("")}
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section__head"><span class="section__title">Вишлист</span></div>
-        <div class="list">
-          ${r.wishes.map((x, i) => `
-            <div class="wish">
-              <div class="wish__num">${i + 1}</div>
-              <div class="wish__body">
-                <div>${esc(x.text)}</div>
-                ${x.link ? `<a class="wish__link" href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.link)}</a>` : ""}
-              </div>
+        <div class="paper steps">
+          ${steps.map(([ic, label], i) => `
+            <div class="step ${g.giftStatus > i ? "is-done" : ""}">
+              <div class="step__dot">${icon(g.giftStatus > i ? "check" : ic, "i--sm")}</div>${label}
             </div>`).join("")}
         </div>
       </div>
 
-      ${r.notWanted ? `<div class="section card"><div class="small muted">🚫 Не дарить</div><div style="margin-top:4px">${esc(r.notWanted)}</div></div>` : ""}
-      ${r.hints ? `<div class="card" style="margin-top:10px"><div class="small muted">💡 Подсказки</div><div style="margin-top:4px">${esc(r.hints)}</div></div>` : ""}
-
-      ${g.anonChat ? `
       <div class="section">
-        <div class="list">
-          <button class="list__item" data-go="chat/${g.id}">
-            <span style="font-size:22px">🕵️</span>
-            <div class="list__body"><div class="list__title">Анонимный вопрос подопечному</div><div class="list__sub">${esc(r.name)} не узнает, кто спрашивает</div></div>
-            <span class="chev">›</span>
-          </button>
-          <button class="list__item" data-go="wishlist/${g.id}">
-            <span style="font-size:22px">📝</span>
-            <div class="list__body"><div class="list__title">Мой вишлист</div><div class="list__sub">Его видит ваш Санта</div></div>
-            <span class="chev">›</span>
-          </button>
+        <div class="section__head"><span class="section__title">Вишлист</span><span class="section__aside">${r.wishes.length} ${plural(r.wishes.length, ["желание", "желания", "желаний"])}</span></div>
+        <div class="paper">
+          ${r.wishes.map((x, i) => `
+            <div class="wish">
+              <div class="wish__num">${String(i + 1).padStart(2, "0")}</div>
+              <div class="wish__body">
+                <div>${esc(x.text)}</div>
+                ${x.link ? `<a class="wish__link" href="${esc(x.link)}" target="_blank" rel="noopener">${icon("ext", "i--sm")}${esc(x.link.replace(/^https?:\/\/(www\.)?/, ""))}</a>` : ""}
+              </div>
+            </div>`).join("")}
         </div>
-      </div>` : ""}
+        ${r.notWanted || r.hints ? `
+        <div class="paper" style="margin-top:10px">
+          ${r.notWanted ? `<div class="kv"><div class="kv__k" style="color:var(--red)">${icon("ban", "i--sm")}Не дарить</div><div class="kv__v">${esc(r.notWanted)}</div></div>` : ""}
+          ${r.hints ? `<div class="kv"><div class="kv__k">${icon("bulb", "i--sm")}Подсказки</div><div class="kv__v">${esc(r.hints)}</div></div>` : ""}
+        </div>` : ""}
+      </div>
+
+      <div class="section paper">
+        ${g.anonChat ? listItem({ go: "chat/" + g.id, ic: "secret", red: true, title: "Анонимный вопрос", sub: `${esc(r.name)} не узнает, кто спрашивает` }) : ""}
+        ${listItem({ go: "wishlist/" + g.id, ic: "list", title: "Мой вишлист", sub: "Его видит ваш Санта" })}
+      </div>
     `);
 
     const next = ["Подарок куплен", "Подарок отправлен", null][Math.min(g.giftStatus, 2)];
@@ -735,18 +721,16 @@
     };
 
     mount(`
-      <div class="hero" style="margin-bottom:6px">
-        <div style="display:flex;gap:12px;align-items:center">
-          ${avatar(g.recipient, "avatar--sm")}
-          <div><h3>${esc(g.recipient.name)}</h3><div class="small muted">вы пишете как 🎅 Тайный Санта</div></div>
-        </div>
+      <div class="chat-head">
+        ${avatar(g.recipient, "avatar--sm")}
+        <div style="flex:1"><h3>${esc(g.recipient.name)}</h3><div class="small muted">вы пишете как <span class="script" style="font-size:16px">Тайный Санта</span></div></div>
       </div>
-      <p class="chat-note">Сообщения доставляет бот. Ваше имя скрыто.</p>
+      <p class="chat-note">${icon("secret", "i--sm")}Сообщения доставляет бот, ваше имя скрыто</p>
       <div class="chat" id="chat"></div>
       <form class="composer" id="composer">
         <div class="composer__inner">
-          <input class="input" id="msg" placeholder="Спросите о вкусах…" autocomplete="off" />
-          <button class="btn btn--primary" aria-label="Отправить">➤</button>
+          <input class="input input--dark" id="msg" placeholder="Спросите о вкусах…" autocomplete="off" />
+          <button class="btn btn--primary btn--icon" aria-label="Отправить">${icon("send")}</button>
         </div>
       </form>
     `);
