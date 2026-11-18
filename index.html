@@ -7,10 +7,19 @@
   <meta name="theme-color" content="#111b3a" />
   <title>Тайный Санта · Р-СТРОЙ</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    /* Основная тема — «Морозное утро» с фирменными иллюстрациями.
+       Запасные варианты: ?theme=classic | aurora | dusk | retro | neon | velvet */
+    (function () {
+      var t = new URLSearchParams(location.search).get("theme") || "frost";
+      if (t !== "classic") document.documentElement.dataset.theme = t;
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=4" />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=Manrope:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=Oswald:wght@500;700&family=Lobster&family=Marck+Script&family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css?v=6" />
+  <link rel="stylesheet" href="css/themes.css?v=6" />
 </head>
 <body>
   <div class="sky" aria-hidden="true"></div>
@@ -27,8 +36,9 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="js/art.js?v=4"></script>
-  <script src="js/data.js?v=4"></script>
-  <script src="js/app.js?v=4"></script>
+  <script src="js/art.js?v=6"></script>
+  <script src="js/art-themes.js?v=6"></script>
+  <script src="js/data.js?v=6"></script>
+  <script src="js/app.js?v=6"></script>
 </body>
 </html>
