@@ -325,7 +325,8 @@
 [data-theme="frost"] body { color: #1b2547; background: linear-gradient(180deg, #f4f7fb 0%, #e3eaf4 55%, #d5dfee 100%) fixed; }
 [data-theme="frost"] .sky { opacity: 0; }
 [data-theme="frost"] .grain { opacity: .05; }
-[data-theme="frost"] .snowfall i { background: #a9bcd6; }
+[data-theme="frost"] .snowfall i { background: #ffffff; box-shadow: 0 0 3px rgba(120, 160, 220, .9), 0 0 8px rgba(150, 190, 255, .7); }
+[data-theme="frost"] .snowfall i.spark { background: radial-gradient(circle, #fff 0 30%, #cfe3ff 55%, rgba(255,255,255,0) 72%); filter: drop-shadow(0 0 2px #5f8fd6) drop-shadow(0 0 7px rgba(110, 160, 240, 1)); }
 [data-theme="frost"] .masthead { border-color: rgba(27, 37, 71, .12); }
 [data-theme="frost"] .masthead b, [data-theme="frost"] .title-block__wide, [data-theme="frost"] .section__title, [data-theme="frost"] h1 { color: #1f2f5c; }
 [data-theme="frost"] .title-block .script { color: #b3261e; }
