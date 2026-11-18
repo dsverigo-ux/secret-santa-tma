@@ -48,10 +48,8 @@ docs/FEATURES.md
 ## Запуск
 **В браузере:** откройте `index.html` или включите GitHub Pages (Settings → Pages → Branch: main) и откройте ссылку.
 
-**В Telegram:**
-1. Включите GitHub Pages — получите HTTPS-адрес.
-2. В @BotFather: `/newbot` → `/newapp` (или Bot Settings → Menu Button) → укажите адрес.
-3. Откройте бота и нажмите кнопку приложения.
+**В Telegram:** бот [@SecretRGameBot](https://t.me/SecretRGameBot), приложение — https://t.me/SecretRGameBot/santa
+(основное приложение бота, кнопка меню «Тайный Санта» и `/newapp` настроены в @BotFather; обложка — `cover-640x360.png`).
 
 ## Следующие шаги
 - Бэкенд: бот + API, проверка подписи `initData`
