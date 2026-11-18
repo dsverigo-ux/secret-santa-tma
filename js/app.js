@@ -74,9 +74,25 @@
     clearTimeout(toast.t);
     toast.t = setTimeout(() => el.classList.remove("is-visible"), 2600);
   };
-  const confirmDialog = (text, cb) => {
-    if (inTelegram && tg.showConfirm) tg.showConfirm(text, ok => ok && cb());
-    else if (window.confirm(text)) cb();
+  /* Подтверждение: своё окно внутри приложения — работает в любом браузере и в Telegram */
+  const confirmDialog = (text, cb, yes = "Да", no = "Нет, исправить") => {
+    const wrap = document.createElement("div");
+    wrap.className = "modal";
+    wrap.setAttribute("role", "dialog");
+    wrap.setAttribute("aria-modal", "true");
+    wrap.innerHTML = `<div class="modal__box">
+        <p class="modal__text">${esc(text)}</p>
+        <button type="button" class="btn btn--primary btn--block modal__yes">${esc(yes)}</button>
+        <button type="button" class="btn btn--text btn--block modal__no">${esc(no)}</button>
+      </div>`;
+    const close = () => { wrap.remove(); if (inTelegram) tg.MainButton.show(); };
+    wrap.querySelector(".modal__yes").onclick = () => { close(); cb(); };
+    wrap.querySelector(".modal__no").onclick = close;
+    wrap.addEventListener("click", e => { if (e.target === wrap) close(); });
+    if (inTelegram) tg.MainButton.hide();
+    document.body.appendChild(wrap);
+    haptic("light");
+    wrap.querySelector(".modal__yes").focus();
   };
 
   /* ---------- Большая кнопка внизу (родная кнопка Telegram) ---------- */
@@ -309,7 +325,7 @@
   function renderRecipient() {
     mount(`${masthead()}${stepper(3, "Твой подопечный")}<h1 class="screen-title">Время выбирать подарок!</h1>${recipientCard()}`);
     setMain("Подарок куплен!", () =>
-      confirmDialog("Отметить, что подарок куплен?", () => { haptic("success"); goStep("done"); }));
+      confirmDialog("Отметить, что подарок куплен?", () => { haptic("success"); goStep("done"); }, "Да, куплен", "Пока нет"));
   }
 
   /* =======================================================
