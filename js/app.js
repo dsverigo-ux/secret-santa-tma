@@ -357,11 +357,16 @@
     const n = window.innerWidth < 600 ? 46 : 70;
     for (let i = 0; i < n; i++) {
       const f = document.createElement("i");
-      const size = 2 + Math.random() * 4.5, dur = 8 + Math.random() * 10;
+      const spark = i % 3 === 0;                           // каждая третья — блестящая искра
+      const size = spark ? 10 + Math.random() * 8 : 2 + Math.random() * 4.5;
+      const dur = 8 + Math.random() * 10, glint = 1.2 + Math.random() * 1.6;
+      if (spark) f.className = "spark";
       f.style.cssText = `left:${Math.random() * 100}%;width:${size}px;height:${size}px;` +
-        `opacity:${.35 + Math.random() * .55};animation-duration:${dur}s;animation-delay:${-Math.random() * dur}s;` +
+        `opacity:${.45 + Math.random() * .5};` +
+        `animation-duration:${dur}s${spark ? `, ${glint}s` : ""};` +
+        `animation-delay:${-Math.random() * dur}s${spark ? `, ${-Math.random() * glint}s` : ""};` +
         `--dx:${(Math.random() * 80 - 40).toFixed(0)}px;--y:${(Math.random() * 100).toFixed(1)}%;` +
-        (size > 5 ? "filter:blur(1px);" : "");
+        (!spark && size > 5 ? "filter:blur(1px);" : "");
       box.appendChild(f);
     }
     document.body.appendChild(box);
