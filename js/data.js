@@ -4,15 +4,15 @@ window.MOCK = {
 
   games: [
     {
-      id: "g_NY2027",
-      title: "Новый год в ПТО",
+      id: "g_RS2027",
+      title: "Новый год Р-СТРОЙ",
       cover: "navy",
       budget: 3000,
       currency: "₽",
       drawDate: "2026-12-15",
       exchangeDate: "2026-12-27",
       format: "offline",
-      rules: "Обмен подарками на корпоративе 26 декабря. Подарок — в пределах бюджета, упаковка обязательна.",
+      rules: "Обмен подарками на новогоднем корпоративе Р-СТРОЙ 26 декабря. Подарок — в пределах бюджета, упаковка обязательна.",
       isOwner: true,
       status: "registration", // registration | drawn | finished
       anonChat: true,
@@ -27,15 +27,15 @@ window.MOCK = {
       exclusions: [[2, 3]]
     },
     {
-      id: "g_FAM",
-      title: "Семейный Санта",
+      id: "g_GAS",
+      title: "Р-СТРОЙ · Газовый промысел",
       cover: "red",
       budget: 5000,
       currency: "₽",
       drawDate: "2026-12-01",
       exchangeDate: "2026-12-31",
       format: "delivery",
-      rules: "Дарим по вишлисту, сюрприз приветствуется.",
+      rules: "Дарим по вишлисту, сюрприз приветствуется. Подарки отправляем на площадки.",
       isOwner: false,
       status: "drawn",
       anonChat: true,
@@ -61,8 +61,8 @@ window.MOCK = {
   ],
 
   invite: {
-    id: "g_DRUZ",
-    title: "Новый год на объекте",
+    id: "g_KS",
+    title: "Р-СТРОЙ · Компрессорная станция",
     cover: "champ",
     owner: "Никита Р., прораб",
     budget: 2000,

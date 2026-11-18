@@ -8,9 +8,16 @@
   const tg = window.Telegram && window.Telegram.WebApp;
   const inTelegram = !!(tg && tg.initData);
   const state = JSON.parse(JSON.stringify(window.MOCK));
-  const { icon, hero, pipe } = window.ART;
+  const { icon, pipe } = window.ART;
+  const THEME = document.documentElement.dataset.theme || "classic";
+  const hero = (window.ART.heroes && window.ART.heroes[THEME]) || window.ART.hero;
   const $app = document.getElementById("app");
-  const BRAND = { navy: "#111b3a", red: "#b3261e" };
+  const BRAND = {
+    navy: ({ aurora: "#050b14", retro: "#efe3c8", neon: "#07070c", velvet: "#0c2416" })[document.documentElement.dataset.theme] || "#111b3a",
+    red: ({ neon: "#ff3b30", velvet: "#f5f7ef" })[document.documentElement.dataset.theme] || "#b3261e",
+    btnText: document.documentElement.dataset.theme === "velvet" ? "#0c2416" : "#ffffff"
+  };
+  const mini = k => (window.ART.mini ? `<span class="tile__art">${window.ART.mini[k]}</span>` : "");
 
   /* ---------- Telegram: инициализация ---------- */
   if (inTelegram) {
@@ -26,6 +33,7 @@
   }
 
   /* ---------- Утилиты ---------- */
+  const nb = (s = "") => s.replace(/Р-СТРОЙ/g, '<span style="white-space:nowrap">Р-СТРОЙ</span>');
   const esc = (s = "") => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const initials = name => name.split(/\s+/).map(p => p[0]).join("").slice(0, 2).toUpperCase();
   const fmtDate = iso => new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
@@ -66,7 +74,7 @@
     if (mainHandler && inTelegram) tg.MainButton.offClick(mainHandler);
     mainHandler = () => { haptic("medium"); handler(); };
     if (inTelegram) {
-      tg.MainButton.setParams({ text, color: BRAND.red, text_color: "#ffffff", is_visible: true, is_active: true });
+      tg.MainButton.setParams({ text, color: BRAND.red, text_color: BRAND.btnText, is_visible: true, is_active: true });
       tg.MainButton.onClick(mainHandler);
     } else {
       fbMainBtn.textContent = text;
@@ -154,7 +162,7 @@
               <span class="badge ${g.status === "drawn" ? "badge--champ" : ""}">${g.isOwner ? icon("crown", "i--sm") : ""}${status(g)}</span>
               <span class="ticket__code">№ ${code(g.id)}</span>
             </div>
-            <div class="ticket__title">${esc(g.title)}</div>
+            <div class="ticket__title">${nb(esc(g.title))}</div>
             <div class="ticket__meta">
               <span>${icon("wallet", "i--sm")}до ${fmtMoney(g.budget, g.currency)}</span>
               <span>${icon("users", "i--sm")}${g.participants.length}</span>
@@ -170,7 +178,7 @@
       <div class="section">
         <div class="section__head"><span class="section__title">Вступить по коду</span></div>
         <div class="input-group">
-          <input class="input input--dark" id="join-code" placeholder="Например, FAM" maxlength="12" autocapitalize="characters" />
+          <input class="input input--dark" id="join-code" placeholder="Например, GAS" maxlength="12" autocapitalize="characters" />
           <button class="btn btn--outline" id="join-btn">Найти</button>
         </div>
       </div>
@@ -207,7 +215,7 @@
         <div class="paper paper--pad">
           <label class="field">
             <span class="field__label">Название</span>
-            <input class="input" id="f-title" placeholder="Например, Новый год в ПТО" maxlength="60" />
+            <input class="input" id="f-title" placeholder="Например, Новый год Р-СТРОЙ" maxlength="60" />
           </label>
           <div class="field">
             <span class="field__label">Обложка</span>
@@ -302,14 +310,15 @@
       ${masthead("Приглашение")}
       <div class="doc-head ${coverClass(g.cover, "doc-head")}">
         <div class="eyebrow">Официальное приглашение</div>
-        <h1>${esc(g.title)}</h1>
+        <h1>${nb(esc(g.title))}</h1>
         <span class="script">от ${esc(g.owner)}</span>
       </div>
 
       <div class="tiles">
-        <div class="tile"><div class="tile__label">Бюджет</div><div class="tile__value">${fmtMoney(g.budget, g.currency)}</div></div>
-        <div class="tile"><div class="tile__label">Участники</div><div class="tile__value">${g.count}</div></div>
-        <div class="tile tile--navy"><div class="tile__label">До жеребьёвки</div><div class="tile__value">${daysLeft(g.drawDate)} ${plural(daysLeft(g.drawDate), ["день", "дня", "дней"])}</div></div>
+        <div class="tile">${mini("coin")}<div class="tile__label">Бюджет</div><div class="tile__value">${fmtMoney(g.budget, g.currency)}</div></div>
+        <div class="tile">${mini("sphere")}<div class="tile__label">Участники</div><div class="tile__value">${g.count}</div></div>
+        <div class="tile tile--navy">${mini("ball")}<div class="tile__label">До жеребьёвки</div><div class="tile__value">${daysLeft(g.drawDate)} ${plural(daysLeft(g.drawDate), ["день", "дня", "дней"])}</div></div>
+        <div class="tile tile--extra">${mini("gift")}<div class="tile__label">Обмен</div><div class="tile__value">${fmtShort(g.exchangeDate)}</div></div>
       </div>
 
       <div class="section paper">
@@ -355,14 +364,15 @@
       ${masthead("№ " + code(g.id))}
       <div class="doc-head ${coverClass(g.cover, "doc-head")}">
         <div class="eyebrow">${g.isOwner ? "Вы — организатор" : "Участник игры"}</div>
-        <h1>${esc(g.title)}</h1>
+        <h1>${nb(esc(g.title))}</h1>
         <span class="script">${g.format === "delivery" ? "подарки — доставкой" : "обмен на встрече"}</span>
       </div>
 
       <div class="tiles">
-        <div class="tile"><div class="tile__label">Бюджет</div><div class="tile__value">${fmtMoney(g.budget, g.currency)}</div></div>
-        <div class="tile"><div class="tile__label">Жеребьёвка</div><div class="tile__value">${fmtShort(g.drawDate)}</div></div>
-        <div class="tile tile--navy"><div class="tile__label">Обмен</div><div class="tile__value">${fmtShort(g.exchangeDate)}</div></div>
+        <div class="tile">${mini("coin")}<div class="tile__label">Бюджет</div><div class="tile__value">${fmtMoney(g.budget, g.currency)}</div></div>
+        <div class="tile">${mini("ball")}<div class="tile__label">Жеребьёвка</div><div class="tile__value">${fmtShort(g.drawDate)}</div></div>
+        <div class="tile tile--navy">${mini("gift")}<div class="tile__label">Обмен</div><div class="tile__value">${fmtShort(g.exchangeDate)}</div></div>
+        <div class="tile tile--extra">${mini("sphere")}<div class="tile__label">Формат</div><div class="tile__value">${g.format === "delivery" ? "Доставка" : "Встреча"}</div></div>
       </div>
 
       ${me && !me.wishlist ? `
@@ -746,6 +756,25 @@
       drawMsgs();
     });
   }
+
+  /* ---------- Снегопад ---------- */
+  (function snowfall() {
+    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const box = document.createElement("div");
+    box.className = "snowfall";
+    box.setAttribute("aria-hidden", "true");
+    const n = window.innerWidth < 600 ? 46 : 70;
+    for (let i = 0; i < n; i++) {
+      const f = document.createElement("i");
+      const size = 2 + Math.random() * 4.5, dur = 8 + Math.random() * 10;
+      f.style.cssText = `left:${Math.random() * 100}%;width:${size}px;height:${size}px;` +
+        `opacity:${.35 + Math.random() * .55};animation-duration:${dur}s;animation-delay:${-Math.random() * dur}s;` +
+        `--dx:${(Math.random() * 80 - 40).toFixed(0)}px;--y:${(Math.random() * 100).toFixed(1)}%;` +
+        (size > 5 ? "filter:blur(1px);" : "");
+      box.appendChild(f);
+    }
+    document.body.appendChild(box);
+  })();
 
   /* ---------- Старт: учитываем start_param из ссылки ---------- */
   const startParam = inTelegram && tg.initDataUnsafe && tg.initDataUnsafe.start_param;

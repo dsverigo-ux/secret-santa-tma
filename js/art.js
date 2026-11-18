@@ -61,7 +61,7 @@ window.ART = (() => {
 
   const hero = `
 <svg viewBox="0 0 360 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Газовый промысел в новогоднюю ночь: факельная башня-ёлка, газгольдеры и газопровод с гирляндой">
-  <circle cx="318" cy="36" r="14" fill="#ecd9a8"/><circle cx="324" cy="31" r="12" fill="#1f2f5c"/>
+  <mask id="moonCutH"><rect width="360" height="210" fill="#fff"/><circle cx="324" cy="31" r="12" fill="#000"/></mask><circle cx="318" cy="36" r="14" fill="#ecd9a8" mask="url(#moonCutH)"/>
   <g stroke="#fff" stroke-width="1.1" stroke-linecap="round" opacity=".85">
     <path d="M160 22v6M157 25h6M158 23l4 4M162 23l-4 4"/><path d="M262 66v5M259.5 68.5h5"/>
     <path d="M24 34v5M21.5 36.5h5"/><path d="M206 44v4M204 46h4"/>
