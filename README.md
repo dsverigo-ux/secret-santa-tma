@@ -16,7 +16,7 @@
 
 Крупный текст, одна большая кнопка на экране, прогресс сохраняется между запусками.
 Параметры игры (даты, бюджет, место) — в `js/data.js`.
-Для просмотра: `?step=welcome | wishlist | waiting | reveal | recipient | done`, сброс прогресса — `?reset`.
+Для просмотра: `?step=welcome | wishlist | waiting | reveal | recipient | done`, сброс прогресса — `?reset`, в Telegram — ссылка https://t.me/SecretRGameBot/santa?startapp=reset
 
 Полное описание функционала: [docs/FEATURES.md](docs/FEATURES.md)
 
