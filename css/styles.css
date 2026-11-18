@@ -453,3 +453,11 @@ body.has-fallback-back .app { padding-top: 60px; }
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, .5); transition: .25s; max-width: calc(100% - 32px);
 }
 .toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+
+/* ===== Снегопад ===== */
+.snowfall { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+.snowfall i { position: absolute; top: -10px; border-radius: 50%; background: #fff; animation: snowfall linear infinite; will-change: transform; }
+@keyframes snowfall { to { transform: translate(var(--dx), 105vh); } }
+
+/* ===== Элементы, которые есть только в отдельных темах ===== */
+.tile__art, .tile--extra { display: none; }
