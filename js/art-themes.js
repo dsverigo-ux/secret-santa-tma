@@ -246,7 +246,114 @@
     sphere: `<svg viewBox="0 0 56 56" aria-hidden="true"><defs>${defsV("ms")}</defs>${gasBall(28, 24, 16, "ms")}</svg>`
   };
 
-  window.ART.heroes = { retro, neon, velvet }; // в «Северном сиянии» — основная иллюстрация
+
+  /* ---------- 5. Минимал: хромированная снежинка ---------- */
+  const minimal = (() => {
+    const arm = `M0 0V-150M0 -52l-34 -34M0 -52l34 -34M0 -100l-26 -26M0 -100l26 -26M-34 -86l-8 -22M34 -86l8 -22`;
+    const arms = w => Array.from({ length: 6 }, (_, i) => `<path d="${arm}" transform="rotate(${i * 60})" stroke-width="${w}"/>`).join("");
+    return `
+<svg viewBox="0 0 360 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Объёмная хромированная снежинка и хромированный шар-газгольдер">
+  <defs>
+    <linearGradient id="chr" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbfbfb"/><stop offset=".22" stop-color="#9c9c9c"/><stop offset=".42" stop-color="#f4f4f4"/>
+      <stop offset=".58" stop-color="#6f6f6f"/><stop offset=".78" stop-color="#e9e9e9"/><stop offset="1" stop-color="#8a8a8a"/>
+    </linearGradient>
+    <radialGradient id="chrBall" fx=".32" fy=".28" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#bdbdbd"/><stop offset=".7" stop-color="#5e5e5e"/><stop offset="1" stop-color="#cfcfcf"/></radialGradient>
+    <filter id="mshadow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <g transform="translate(250 128) rotate(12)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#000" opacity=".22" filter="url(#mshadow)" transform="translate(8 12)">${arms(20)}</g>
+    <g stroke="#5a5a5a">${arms(21)}</g>
+    <g stroke="url(#chr)">${arms(17)}</g>
+    <g stroke="#ffffff" opacity=".75" transform="translate(-2 -2)">${arms(3.5)}</g>
+    <circle r="16" fill="url(#chrBall)" stroke="#5a5a5a" stroke-width="2"/>
+  </g>
+  <g transform="translate(64 168)">
+    <path d="M0 -42v-14" stroke="#7a7a7a" stroke-width="1"/>
+    <rect x="-6" y="-46" width="12" height="7" rx="1.5" fill="url(#chr)"/>
+    <ellipse cx="4" cy="10" rx="30" ry="6" fill="#000" opacity=".12" filter="url(#mshadow)"/>
+    <circle r="30" fill="url(#chrBall)"/>
+    <path d="M-30 2a30 9 0 0 0 60 0" fill="none" stroke="#c8352b" stroke-width="3.5"/>
+    <ellipse cx="-11" cy="-13" rx="8" ry="4.5" fill="#fff" opacity=".85" transform="rotate(-35 -11 -13)"/>
+  </g>
+</svg>`;
+  })();
+
+  /* ---------- 6. Уютный: кот-прораб «один на объекте» ---------- */
+  const cozy = `
+<svg viewBox="0 0 360 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Рыжий кот в строительной каске и новогоднем свитере с кружкой какао среди подарков">
+  <defs>
+    <pattern id="knit" width="12" height="10" patternUnits="userSpaceOnUse">
+      <path d="M0 2l6 6 6-6" fill="none" stroke="#fff4e6" stroke-width="2.2" stroke-linejoin="round"/>
+    </pattern>
+    <radialGradient id="glow" r=".6"><stop offset="0" stop-color="#ffe7b8" stop-opacity=".55"/><stop offset="1" stop-color="#ffe7b8" stop-opacity="0"/></radialGradient>
+  </defs>
+  <!-- лучи и окно -->
+  <g stroke="#fff" stroke-width="1" opacity=".16">${Array.from({ length: 18 }, (_, i) => { const a = i * Math.PI / 9; return `<path d="M180 120L${180 + 300 * Math.cos(a)} ${120 + 300 * Math.sin(a)}"/>`; }).join("")}</g>
+  <circle cx="180" cy="120" r="120" fill="url(#glow)"/>
+  <!-- гирлянда с игрушкой-газгольдером -->
+  <path d="M0 16q45 26 90 6t90 4 90-4 90 6" fill="none" stroke="#2b3a6b" stroke-width="1.2" opacity=".6"/>
+  ${bulbs([[18,24],[45,31],[72,27],[108,22],[140,26],[200,27],[232,23],[262,26],[300,25],[334,22]], ["#ffd36b", "#f6a8a0", "#fff4e6"], 3, "blink")}
+  <path d="M290 26v14" stroke="#2b3a6b" stroke-width="1"/>
+  <circle cx="290" cy="50" r="10" fill="#2b3a6b"/><path d="M280 51a10 3 0 0 0 20 0" fill="none" stroke="#c8352b" stroke-width="2.4"/>
+  <path d="M283 59l-2 6M297 59l2 6" stroke="#ffd36b" stroke-width="1.6" stroke-linecap="round"/>
+  <ellipse cx="286" cy="46" rx="3" ry="1.8" fill="#fff" opacity=".6"/>
+  <!-- пол -->
+  <path d="M0 206h360v24H0z" fill="#3a4f9a"/>
+  <path d="M0 206h360" stroke="#fff" stroke-width="1" opacity=".25"/>
+  <!-- подарки -->
+  <g>
+    <rect x="34" y="166" width="46" height="40" rx="3" fill="#f6a8a0"/><rect x="53" y="166" width="8" height="40" fill="#fff4e6"/>
+    <rect x="30" y="158" width="54" height="11" rx="2" fill="#f7b8b0"/><path d="M57 158c-10-14-22-6-12 0zM57 158c10-14 22-6 12 0z" fill="#fff4e6"/>
+    <rect x="86" y="182" width="30" height="24" rx="2" fill="#ffd36b"/><rect x="98" y="182" width="5" height="24" fill="#c8352b"/>
+    <rect x="262" y="174" width="40" height="32" rx="3" fill="#fff4e6"/><rect x="262" y="186" width="40" height="6" fill="#c8352b"/><rect x="279" y="174" width="6" height="32" fill="#c8352b"/>
+    <rect x="306" y="186" width="26" height="20" rx="2" fill="#c8352b"/><rect x="317" y="186" width="4" height="20" fill="#fff4e6"/>
+  </g>
+  <!-- хвост -->
+  <path d="M222 196c40 4 52-22 40-40-6-9-18-6-16 4" fill="none" stroke="#e8994f" stroke-width="15" stroke-linecap="round"/>
+  <path d="M250 196l6-8M259 180l9-3M257 162l9 2" stroke="#c9742f" stroke-width="4" stroke-linecap="round"/>
+  <!-- туловище в свитере -->
+  <path d="M130 206c-4-46 16-78 50-78s54 32 50 78z" fill="#c8352b"/>
+  <rect x="134" y="152" width="92" height="12" fill="url(#knit)"/>
+  <path d="M134 176h92" stroke="#fff4e6" stroke-width="1.4" stroke-dasharray="3 5" opacity=".8"/>
+  <path d="M150 132c10 10 50 10 60 0" fill="none" stroke="#a82a21" stroke-width="7" stroke-linecap="round"/>
+  <!-- кружка с какао -->
+  <g>
+    <path d="M172 150c-4-8 2-14 0-20M186 150c-4-8 2-14 0-20" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".75"/>
+    <rect x="164" y="154" width="32" height="34" rx="5" fill="#fff4e6"/>
+    <path d="M196 162c10 0 10 16 0 16" fill="none" stroke="#fff4e6" stroke-width="4"/>
+    <rect x="164" y="166" width="32" height="6" fill="#2b3a6b"/>
+    <ellipse cx="180" cy="156" rx="14" ry="3" fill="#7a4a2b"/>
+  </g>
+  <!-- лапы -->
+  <ellipse cx="160" cy="172" rx="10" ry="8" fill="#e8994f"/><ellipse cx="200" cy="172" rx="10" ry="8" fill="#e8994f"/>
+  <path d="M156 176v-4M161 177v-4M196 177v-4M201 176v-4" stroke="#c9742f" stroke-width="1.4" stroke-linecap="round"/>
+  <!-- голова -->
+  <path d="M136 92l-8-30 30 16zM224 92l8-30-30 16z" fill="#e8994f"/>
+  <path d="M138 86l-4-16 14 8zM222 86l4-16-14 8z" fill="#f6a8a0"/>
+  <ellipse cx="180" cy="102" rx="48" ry="38" fill="#e8994f"/>
+  <path d="M172 70l2 10M180 68v11M188 70l-2 10" stroke="#c9742f" stroke-width="3" stroke-linecap="round"/>
+  <path d="M134 104h12M134 112l12-3M226 104h-12M226 112l-12-3" stroke="#c9742f" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="180" cy="116" rx="18" ry="12" fill="#fff4e6"/>
+  <!-- каска -->
+  <path d="M140 78c0-26 18-40 40-40s40 14 40 40z" fill="#ffd36b"/>
+  <path d="M180 38v40M162 42c-4 10-4 26-4 36M198 42c4 10 4 26 4 36" stroke="#e8b43a" stroke-width="3" fill="none"/>
+  <rect x="132" y="76" width="96" height="9" rx="4.5" fill="#f2c230"/>
+  <circle cx="200" cy="60" r="6" fill="#c8352b"/><path d="M198 57v6M198 57h2.5a1.6 1.6 0 0 1 0 3.2H198" stroke="#fff" stroke-width="1.3" fill="none"/>
+  <!-- мордочка -->
+  <path d="M158 102q6-7 12 0M190 102q6-7 12 0" fill="none" stroke="#2b2b2b" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="152" cy="114" rx="7" ry="4" fill="#f6a8a0" opacity=".8"/><ellipse cx="208" cy="114" rx="7" ry="4" fill="#f6a8a0" opacity=".8"/>
+  <path d="M176 111h8l-4 5z" fill="#e0707a"/>
+  <path d="M180 116q-4 6-9 3M180 116q4 6 9 3" fill="none" stroke="#2b2b2b" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M168 116l-24-4M168 120l-24 2M192 116l24-4M192 120l24 2" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity=".9"/>
+  <!-- подпись -->
+  <text x="20" y="74" font-family="Marck Script, cursive" font-size="26" fill="#fff4e6">один</text>
+  <text x="20" y="100" font-family="Marck Script, cursive" font-size="26" fill="#fff4e6">на объекте</text>
+  <path d="M248 74l3 7 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z" fill="#fff4e6" opacity=".9"/>
+  <path d="M320 104l2 4 4 .5-3 3 .8 4-3.8-2-3.8 2 .8-4-3-3 4-.5z" fill="#fff4e6" opacity=".7"/>
+</svg>`;
+
+  window.ART.heroes = { retro, neon, velvet, minimal, cozy }; // в «Северном сиянии» — основная иллюстрация
   window.ART.heroAurora = aurora;
   window.ART.mini = mini;
 })();
