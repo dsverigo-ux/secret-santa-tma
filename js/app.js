@@ -38,7 +38,12 @@
 
   /* ---------- Состояние (сохраняется между запусками) ---------- */
   const KEY = "rstroy_santa_v1";
-  if (new URLSearchParams(location.search).has("reset")) { try { localStorage.removeItem(KEY); } catch (e) {} }
+  /* сброс прогресса: в браузере ?reset, в Telegram — ссылка t.me/SecretRGameBot/santa?startapp=reset */
+  const startParam = inTelegram && tg.initDataUnsafe && tg.initDataUnsafe.start_param;
+  if (new URLSearchParams(location.search).has("reset") || startParam === "reset") {
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    if (inTelegram && tg.CloudStorage) tg.CloudStorage.removeItem(KEY);
+  }
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
   const state = Object.assign({ step: "welcome", wishes: "", notWanted: "" }, load());
   const save = () => {
