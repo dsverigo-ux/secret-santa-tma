@@ -15,9 +15,9 @@
   const $app = document.getElementById("app");
 
   const BRAND = {
-    bg: ({ aurora: "#050b14", retro: "#efe3c8", neon: "#07070c", velvet: "#0c2416", frost: "#eef3f9", minimal: "#eeedea", cozy: "#5b7fd6", dusk: "#2a3a72" })[THEME] || "#111b3a",
-    btn: ({ neon: "#ff3b30", velvet: "#f5f7ef", minimal: "#1a1a1a", cozy: "#c8352b" })[THEME] || "#b3261e",
-    btnText: THEME === "velvet" ? "#0c2416" : "#ffffff"
+    bg: ({ aurora: "#050b14", retro: "#efe3c8", neon: "#07070c", velvet: "#0c2416", frost: "#eef3f9", minimal: "#eeedea", cozy: "#5b7fd6", dusk: "#2a3a72", crystal: "#3a5a7c" })[THEME] || "#111b3a",
+    btn: ({ neon: "#ff3b30", velvet: "#f5f7ef", minimal: "#1a1a1a", cozy: "#c8352b", crystal: "#ffffff" })[THEME] || "#b3261e",
+    btnText: ({ velvet: "#0c2416", crystal: "#1f2f5c" })[THEME] || "#ffffff"
   };
 
   /* ---------- Telegram ---------- */
@@ -121,10 +121,11 @@
         <span class="title-block__script script">Тайный</span>
         <div class="title-block__wide">Санта</div>
         <div class="title-block__note">${nb("Новый год<br>Р-СТРОЙ")}</div>
+        <div class="title-block__date">${G.exchangeDate.split("-").reverse().join("/")}</div>
       </div>
       <div class="scene">${hero}<div class="scene__corner"></div></div>
 
-      <p class="lead"><b>Привет, ${esc(userName)}!</b><br>Это Тайный Санта ${nb("Р-СТРОЙ")} — наша новогодняя игра. В ней каждый становится немного волшебником: тайно готовит подарок одному коллеге и сам получает сюрприз от кого-то другого. От кого — узнаешь только в праздник.</p>
+      <p class="lead"><b>Привет, ${esc(userName)}!</b><br>Это Тайный Санта ${nb("Р-СТРОЙ")} — наша новогодняя игра. В ней у каждого появляется своя маленькая новогодняя тайна: ты тайно готовишь подарок одному коллеге, а кто-то другой — сюрприз для тебя. От кого — узнаешь только в праздник.</p>
 
       <div class="section">
         <div class="section__head"><span class="section__title">Какие правила?</span></div>

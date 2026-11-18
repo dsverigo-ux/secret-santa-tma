@@ -353,7 +353,56 @@
   <path d="M320 104l2 4 4 .5-3 3 .8 4-3.8-2-3.8 2 .8-4-3-3 4-.5z" fill="#fff4e6" opacity=".7"/>
 </svg>`;
 
-  window.ART.heroes = { retro, neon, velvet, minimal, cozy }; // в «Северном сиянии» — основная иллюстрация
+
+  /* ---------- 9. Кристалл: стеклянная снежинка с глубиной резкости ---------- */
+  const crystal = (() => {
+    const prism = (len, w, tip) => `M0 ${-w}L${len} ${-w * .7}L${len + tip} 0L${len} ${w * .7}L0 ${w}Z`;
+    const half  = (len, w, tip) => `M0 0L${len + tip} 0L${len} ${w * .7}L0 ${w}Z`;
+    const branch = (x, len, w, ang) => `
+      <g transform="translate(${x} 0) rotate(${ang})">
+        <path d="${prism(len, w, w * 2.2)}" fill="url(#ice)" stroke="#fff" stroke-opacity=".85" stroke-width=".9"/>
+        <path d="${half(len, w, w * 2.2)}" fill="#7fb6d3" opacity=".28"/>
+        <path d="M2 0H${len + w}" stroke="#fff" stroke-width=".8" opacity=".95"/>
+      </g>`;
+    const arm = () => `
+      <path d="${prism(150, 7, 18)}" fill="url(#ice)" stroke="#fff" stroke-opacity=".9" stroke-width="1"/>
+      <path d="${half(150, 7, 18)}" fill="#6aa6c8" opacity=".3"/>
+      <path d="M4 0H160" stroke="#fff" stroke-width="1.1"/>
+      ${branch(46, 56, 5, -58)}${branch(46, 56, 5, 58)}
+      ${branch(88, 44, 4.4, -58)}${branch(88, 44, 4.4, 58)}
+      ${branch(124, 28, 3.6, -58)}${branch(124, 28, 3.6, 58)}
+      <path d="M150 -10l12 10-12 10-12-10z" fill="url(#ice)" stroke="#fff" stroke-width=".8"/>`;
+    const flake = Array.from({ length: 6 }, (_, i) => `<g transform="rotate(${i * 60})">${arm()}</g>`).join("");
+    return `
+<svg viewBox="0 0 360 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Большая стеклянная снежинка с переливом">
+  <defs>
+    <linearGradient id="ice" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".25"/>
+      <stop offset=".42" stop-color="#ffffff" stop-opacity=".95"/>
+      <stop offset=".5" stop-color="#e3f8ff" stop-opacity="1"/>
+      <stop offset=".6" stop-color="#ffffff" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#b9e6f4" stop-opacity=".25"/>
+    </linearGradient>
+    <radialGradient id="core"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#cdeef8" stop-opacity=".2"/></radialGradient>
+    <filter id="dof" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="dof2" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2"/></filter>
+    <filter id="glowC" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>
+  <!-- далёкая размытая снежинка -->
+  <g transform="translate(70 70) scale(.32) rotate(18)" filter="url(#dof)" opacity=".55">${flake}</g>
+  <!-- свечение -->
+  <g transform="translate(292 186) rotate(-8)" filter="url(#glowC)" opacity=".55">${flake}</g>
+  <!-- главная снежинка: ближний край слегка размыт -->
+  <g transform="translate(292 186) rotate(-8)">
+    <g filter="url(#dof2)" opacity=".9">${flake}</g>
+    ${flake}
+    <path d="M0 -22l19 11v22L0 22l-19-11v-22z" fill="url(#core)" stroke="#fff" stroke-width="1.2"/>
+    <path d="M0 -12l10 6v12L0 12l-10-6v-12z" fill="none" stroke="#fff" stroke-width=".8" opacity=".8"/>
+  </g>
+</svg>`;
+  })();
+
+  window.ART.heroes = { retro, neon, velvet, minimal, cozy, crystal }; // в «Северном сиянии» — основная иллюстрация
   window.ART.heroAurora = aurora;
   window.ART.mini = mini;
 })();
