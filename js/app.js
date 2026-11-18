@@ -358,7 +358,7 @@
 
     const me = g.participants.find(p => p.id === 1);
     const filled = g.participants.filter(p => p.wishlist).length;
-    const link = `https://t.me/secret_santa_bot/app?startapp=${g.id}`;
+    const link = `https://t.me/SecretRGameBot/santa?startapp=${g.id}`;
 
     mount(`
       ${masthead("№ " + code(g.id))}
