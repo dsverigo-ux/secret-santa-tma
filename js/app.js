@@ -8,7 +8,7 @@
   const tg = window.Telegram && window.Telegram.WebApp;
   const inTelegram = !!(tg && tg.initData);
   const state = JSON.parse(JSON.stringify(window.MOCK));
-  const { icon, hero, crane } = window.ART;
+  const { icon, hero, pipe } = window.ART;
   const $app = document.getElementById("app");
   const BRAND = { navy: "#111b3a", red: "#b3261e" };
 
@@ -135,7 +135,7 @@
       <div class="title-block">
         <span class="title-block__script script">Тайный</span>
         <div class="title-block__wide">Санта</div>
-        <div class="title-block__note">Строим<br>праздник<br>вместе</div>
+        <div class="title-block__note">Праздник<br>под высоким<br>давлением</div>
       </div>
 
       <div class="scene">
@@ -575,7 +575,7 @@
   }
 
   /* =======================================================
-     7. Жеребьёвка — кран опускает подарок
+     7. Жеребьёвка — подарок поступает по газопроводу
      ======================================================= */
   function renderDraw(id) {
     const g = getGame(id);
@@ -587,16 +587,15 @@
       <div class="draw">
         <div class="eyebrow">Жеребьёвка проведена</div>
         <h1 style="margin-top:8px">Ваш подарок</h1>
-        <span class="script">уже на подъёме</span>
+        <span class="script">поступил по магистрали</span>
 
-        <div class="crane-stage">
-          ${crane}
-          <div class="cable"></div>
+        <div class="pipe-stage">
+          ${pipe}
           <div class="gift-box" id="gift" role="button" tabindex="0" aria-label="Открыть подарок">
             <div class="gift-box__inner">
               <div class="gift-box__face"><span class="gift-box__tag">НАЖМИТЕ</span><span class="gift-box__corner"></span></div>
               <div class="gift-box__back">
-                <div class="small muted" style="font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:10px">Вы — Санта для</div>
+                <div class="gift-box__label">Вы — Санта для</div>
                 <div style="margin-top:12px">${avatar(rec, "avatar--sm")}</div>
                 <h2>${esc(rec.name)}</h2>
               </div>

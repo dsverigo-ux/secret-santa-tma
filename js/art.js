@@ -40,87 +40,106 @@ window.ART = (() => {
     return s;
   };
 
-  /* Главная иллюстрация: башенный кран опускает подарок над ночным городом */
+  /* Главная иллюстрация: газовый промысел в новогоднюю ночь.
+     Факельная башня — ёлка, пламя — звезда, по эстакаде — гирлянда. */
+  const bulbs = (pts, cls = "blink") => pts.map(([x, y], i) =>
+    `<circle class="${i % 2 ? cls : ""}" cx="${x}" cy="${y}" r="1.8" fill="${i % 3 === 0 ? "#d23a2f" : "#ecd9a8"}"/>`).join("");
+
+  const tree = (() => {
+    // решётчатая башня-ёлка: силуэт треугольника + раскосы
+    let s = `<path d="M84 52L56 196M84 52l28 144" stroke="#f3f4f8" stroke-width="1.6"/>`;
+    for (let y = 70; y < 196; y += 18) {
+      const k = (y - 52) / 144, half = 28 * k, k2 = Math.min(1, (y + 18 - 52) / 144), h2 = 28 * k2;
+      s += `<path d="M${84 - half} ${y}h${half * 2}M${84 - half} ${y}L${84 + h2} ${Math.min(y + 18, 196)}M${84 + half} ${y}L${84 - h2} ${Math.min(y + 18, 196)}" stroke="#f3f4f8" stroke-width=".8" opacity=".55"/>`;
+    }
+    // гирлянда по спирали
+    const pts = [];
+    for (let i = 0; i < 14; i++) { const y = 66 + i * 9.5, k = (y - 52) / 144, side = i % 2 ? 1 : -1; pts.push([84 + side * 26 * k * .8, y]); }
+    s += `<path d="M${pts.map(p => p.join(" ")).join("L")}" fill="none" stroke="#ecd9a8" stroke-width=".7" opacity=".6"/>` + bulbs(pts);
+    return s;
+  })();
+
   const hero = `
-<svg viewBox="0 0 360 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Башенный кран опускает новогодний подарок над ночным городом">
-  <defs>
-    <pattern id="lattice" width="8" height="10" patternUnits="userSpaceOnUse">
-      <path d="M0 0L8 10M8 0L0 10" stroke="#f3f4f8" stroke-width="1"/>
-    </pattern>
-  </defs>
-  <!-- луна -->
-  <circle cx="312" cy="38" r="15" fill="#ecd9a8"/>
-  <circle cx="319" cy="33" r="13" fill="#1f2f5c"/>
-  <!-- звёзды-снежинки -->
+<svg viewBox="0 0 360 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Газовый промысел в новогоднюю ночь: факельная башня-ёлка, газгольдеры и газопровод с гирляндой">
+  <circle cx="318" cy="36" r="14" fill="#ecd9a8"/><circle cx="324" cy="31" r="12" fill="#1f2f5c"/>
   <g stroke="#fff" stroke-width="1.1" stroke-linecap="round" opacity=".85">
-    <path d="M150 22v6M147 25h6M148 23l4 4M152 23l-4 4"/>
-    <path d="M280 80v5M277.5 82.5h5"/>
-    <path d="M30 30v5M27.5 32.5h5"/>
-    <path d="M196 70v4M194 72h4"/>
+    <path d="M160 22v6M157 25h6M158 23l4 4M162 23l-4 4"/><path d="M262 66v5M259.5 68.5h5"/>
+    <path d="M24 34v5M21.5 36.5h5"/><path d="M206 44v4M204 46h4"/>
   </g>
-  <!-- дальний план -->
-  <g fill="#18264f">
-    <rect x="0" y="150" width="34" height="60"/><rect x="38" y="132" width="26" height="78"/>
-    <rect x="250" y="140" width="30" height="70"/><rect x="318" y="126" width="42" height="84"/>
-  </g>
-  <!-- строящийся дом -->
+  <!-- дальний лес -->
+  <path d="M0 180l10-16 10 16 8-12 9 12 10-18 10 18H0zM300 182l9-14 9 14 8-11 8 11 10-16 10 16h6v2H300z" fill="#18264f"/>
+  <!-- ректификационные колонны -->
   <g>
-    <rect x="70" y="118" width="64" height="92" fill="#16224a"/>
-    <g stroke="#2a3d72" stroke-width="2">
-      <path d="M70 118h64M70 140h64M70 162h64M70 184h64M86 118v92M102 118v92M118 118v92"/>
-    </g>
-    ${windows(74, 146, 6, 6, 10, 11)}
+    <rect x="138" y="88" width="16" height="110" rx="8" fill="#22336a"/>
+    <rect x="160" y="112" width="12" height="86" rx="6" fill="#1b2a5a"/>
+    <path d="M134 110h24M134 132h24M134 154h24M134 176h24M157 128h18M157 150h18M157 172h18" stroke="#3b5b8f" stroke-width="1.4"/>
+    ${bulbs([[146, 98], [146, 121], [146, 143], [166, 140], [166, 162], [146, 165]])}
   </g>
-  <!-- готовый дом с гирляндой -->
+  <!-- шаровые газгольдеры -->
   <g>
-    <rect x="150" y="104" width="78" height="106" fill="#141f42"/>
-    ${windows(156, 112, 7, 8, 10.5, 11.5)}
-    <path d="M150 104q9.75 8 19.5 0t19.5 0 19.5 0 19.5 0" fill="none" stroke="#b3261e" stroke-width="1.2"/>
-    <g fill="#ecd9a8"><circle cx="160" cy="108" r="1.6"/><circle cx="179" cy="108" r="1.6"/><circle cx="199" cy="108" r="1.6"/><circle cx="218" cy="108" r="1.6"/></g>
+    <path d="M222 168v26M262 168v26M236 172v22M248 172v22M284 172v22M314 172v22M296 176v18" stroke="#3b5b8f" stroke-width="2"/>
+    <circle cx="242" cy="150" r="27" fill="#2a3d72"/>
+    <path d="M222 140a24 24 0 0 1 22-15" stroke="#f3f4f8" stroke-width="2" fill="none" opacity=".35" stroke-linecap="round"/>
+    <path d="M215 152h54" stroke="#b3261e" stroke-width="3"/>
+    <circle cx="299" cy="160" r="20" fill="#24376b"/>
+    <path d="M285 152a18 18 0 0 1 15-11" stroke="#f3f4f8" stroke-width="1.6" fill="none" opacity=".35" stroke-linecap="round"/>
+    <path d="M279 162h40" stroke="#b3261e" stroke-width="2.5"/>
+    <path d="M242 123v-8l6 4" stroke="#ecd9a8" stroke-width="1.2" fill="#d23a2f"/>
   </g>
-  <rect x="284" y="150" width="30" height="60" fill="#16224a"/>
-  ${windows(288, 156, 3, 4)}
-  <!-- кран: мачта -->
-  <rect x="38" y="30" width="12" height="180" fill="url(#lattice)"/>
-  <path d="M38 30v180M50 30v180" stroke="#f3f4f8" stroke-width="1.6"/>
-  <!-- кабина -->
-  <rect x="34" y="34" width="20" height="12" fill="#b3261e"/>
-  <rect x="44" y="37" width="7" height="5" fill="#ecd9a8"/>
-  <!-- стрела -->
-  <path d="M6 30h290" stroke="#f3f4f8" stroke-width="2"/>
-  <path d="M50 22h246" stroke="#f3f4f8" stroke-width="1.2"/>
-  <path d="M50 22l10 8 10-8 10 8 10-8 10 8 10-8 10 8 10-8 10 8 10-8 10 8 10-8 10 8 10-8 10 8 10-8 10 8 10-8 10 8 10-8 10 8 10-8 10 8 6-6" fill="none" stroke="#f3f4f8" stroke-width="1"/>
-  <path d="M44 6v24M44 6L6 30M44 6l252 16" stroke="#f3f4f8" stroke-width="1" opacity=".75"/>
-  <rect x="8" y="30" width="18" height="12" fill="#b3261e"/>
-  <rect x="226" y="27" width="14" height="6" fill="#b3261e"/>
-  <!-- трос и подарок -->
-  <g class="swing">
-    <path d="M233 33v58" stroke="#f3f4f8" stroke-width="1.2"/>
-    <path d="M229 91h8l-4 6z" fill="#f3f4f8"/>
-    <path d="M233 97l-12 10M233 97l12 10" stroke="#f3f4f8" stroke-width="1"/>
-    <rect x="215" y="107" width="36" height="30" rx="2" fill="#b3261e"/>
-    <rect x="230" y="107" width="6" height="30" fill="#f3f4f8"/>
-    <rect x="215" y="119" width="36" height="6" fill="#f3f4f8"/>
-    <path d="M233 107c-6-8-14-4-9 0zM233 107c6-8 14-4 9 0z" fill="#ecd9a8"/>
+  <!-- факельная башня-ёлка -->
+  ${tree}
+  <g class="flame">
+    <path d="M84 30c7 8 9 13 6 19-1.5 3-4 4.5-6 4.5s-4.5-1.5-6-4.5c-2.5-5 0-10 6-19z" fill="#d23a2f"/>
+    <path d="M84 39c3.5 4 4.5 7 3 10-.8 1.5-2 2.3-3 2.3s-2.2-.8-3-2.3c-1.2-2.6 0-5.5 3-10z" fill="#ecd9a8"/>
   </g>
-  <!-- снег на земле -->
-  <path d="M0 204q60-6 120 0t120 0 120 0V210H0z" fill="#f3f4f8" opacity=".9"/>
+  <path d="M80 52h8" stroke="#f3f4f8" stroke-width="2"/>
+  <!-- подарки у основания -->
+  <rect x="64" y="186" width="14" height="12" fill="#b3261e"/><rect x="70" y="186" width="2.4" height="12" fill="#f3f4f8"/>
+  <rect x="90" y="182" width="16" height="16" fill="#ecd9a8"/><rect x="97" y="182" width="2.4" height="16" fill="#b3261e"/><rect x="90" y="189" width="16" height="2.4" fill="#b3261e"/>
+  <!-- эстакада с газопроводом и гирляндой -->
+  <path d="M120 186h240M120 191h240" stroke="#ecd9a8" stroke-width="3.2"/>
+  <path d="M128 184v14M196 184v14M276 184v14M344 184v14" stroke="#3b5b8f" stroke-width="2"/>
+  <path d="M120 184q17 8 34 0t34 0 34 0 34 0 34 0 34 0 34 0" fill="none" stroke="#ecd9a8" stroke-width=".7" opacity=".6"/>
+  ${bulbs([[137, 188], [171, 188], [205, 188], [239, 188], [273, 188], [307, 188], [341, 188]])}
+  <!-- задвижка -->
+  <rect x="226" y="180" width="8" height="16" rx="1" fill="#b3261e"/>
+  <path d="M230 180v-8" stroke="#f3f4f8" stroke-width="1.6"/>
+  <circle cx="230" cy="170" r="5" fill="none" stroke="#d23a2f" stroke-width="2"/>
+  <path d="M0 202q60-6 120 0t120 0 120 0V210H0z" fill="#f3f4f8" opacity=".9"/>
 </svg>`;
 
-  /* Мини-кран для экрана жеребьёвки */
-  const crane = `
-<svg class="crane" viewBox="0 0 360 400" preserveAspectRatio="xMidYMin meet" aria-hidden="true">
-  <path d="M70 0v400M82 0v400" stroke="#f3f4f8" stroke-width="1.6" opacity=".9"/>
-  <path d="M70 58l12 12M82 58L70 70M70 82l12 12M82 82L70 94M70 106l12 12M82 106L70 118M70 130l12 12M82 130L70 142M70 154l12 12M82 154L70 166M70 178l12 12M82 178L70 190M70 202l12 12M82 202L70 214M70 226l12 12M82 226L70 238M70 250l12 12M82 250L70 262M70 274l12 12M82 274L70 286M70 298l12 12M82 298L70 310M70 322l12 12M82 322L70 334M70 346l12 12M82 346L70 358M70 370l12 12M82 370L70 382M70 394l12 12M82 394L70 406" stroke="#f3f4f8" stroke-width=".9" opacity=".55"/>
-  <path d="M20 40h320" stroke="#f3f4f8" stroke-width="2"/>
-  <path d="M82 32h258" stroke="#f3f4f8" stroke-width="1.1"/>
-  <path d="M82 32 l10 8 10-8 l10 8 10-8 l10 8 10-8 l10 8 10-8 l10 8 10-8 l10 8 10-8 l10 8 10-8 l10 8 10-8 l10 8 10-8 l10 8 10-8 l10 8 10-8 l10 8 10-8" fill="none" stroke="#f3f4f8" stroke-width=".9" opacity=".8"/>
-  <path d="M76 10L20 40M76 10l264 22M76 10v22" stroke="#f3f4f8" stroke-width=".9" opacity=".6"/>
-  <rect x="64" y="42" width="24" height="14" fill="#b3261e"/><rect x="76" y="45" width="9" height="6" fill="#ecd9a8"/>
-  <rect x="22" y="40" width="22" height="14" fill="#b3261e"/>
-  <rect x="223" y="37" width="14" height="7" fill="#b3261e"/>
-  <path d="M0 392q90-8 180 0t180 0V400H0z" fill="#f3f4f8" opacity=".9"/>
+  /* Экран жеребьёвки: подарок «поступает» по магистральному газопроводу */
+  const pipe = `
+<svg class="pipe" viewBox="0 0 360 288" preserveAspectRatio="xMidYMin meet" aria-hidden="true">
+  <!-- опоры -->
+  <path d="M46 172v78M140 172v78" stroke="#3b5b8f" stroke-width="5"/>
+  <path d="M30 250h32M124 250h32" stroke="#3b5b8f" stroke-width="4"/>
+  <!-- труба -->
+  <rect x="-10" y="128" width="210" height="44" fill="#ecd9a8"/>
+  <rect x="-10" y="132" width="210" height="8" fill="#fff" opacity=".35"/>
+  <rect x="-10" y="162" width="210" height="10" fill="#000" opacity=".12"/>
+  <!-- фланцы -->
+  <rect x="84" y="120" width="10" height="60" rx="2" fill="#d8c08a"/>
+  <rect x="184" y="118" width="16" height="64" rx="3" fill="#d8c08a"/>
+  <!-- красные бандажи -->
+  <rect x="20" y="128" width="8" height="44" fill="#b3261e"/><rect x="150" y="128" width="8" height="44" fill="#b3261e"/>
+  <!-- задвижка со штурвалом -->
+  <rect x="38" y="104" width="18" height="24" rx="2" fill="#b3261e"/>
+  <path d="M47 104V82" stroke="#f3f4f8" stroke-width="2.4"/>
+  <g class="valve">
+    <circle cx="47" cy="78" r="15" fill="none" stroke="#d23a2f" stroke-width="3.2"/>
+    <path d="M47 63v30M32 78h30M36.4 67.4l21.2 21.2M57.6 67.4L36.4 88.6" stroke="#d23a2f" stroke-width="1.6"/>
+    <circle cx="47" cy="78" r="3" fill="#f3f4f8"/>
+  </g>
+  <!-- торец трубы -->
+  <ellipse cx="200" cy="150" rx="9" ry="31" fill="#d8c08a"/>
+  <ellipse cx="201" cy="150" rx="5.5" ry="25" fill="#111b3a"/>
+  <!-- гирлянда по трубе -->
+  <path d="M0 126q25 12 50 0t50 0 50 0 40 0" fill="none" stroke="#f3f4f8" stroke-width=".8" opacity=".6"/>
+  ${bulbs([[25, 132], [75, 132], [125, 132], [170, 132]])}
+  <!-- снег -->
+  <path d="M0 252q90-8 180 0t180 0V288H0z" fill="#f3f4f8" opacity=".92"/>
 </svg>`;
 
-  return { icon, hero, crane };
+  return { icon, hero, pipe };
 })();
