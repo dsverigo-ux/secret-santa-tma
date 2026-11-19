@@ -55,7 +55,53 @@
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
     if (inTelegram && tg.CloudStorage) tg.CloudStorage.setItem(KEY, JSON.stringify(state));
   };
-  const goStep = step => { state.step = step; save(); render(); };
+  const goStep = step => {
+    if (LIVE) {                                   // настоящая игра: шаг определяет сервер
+      if (step === "wishlist") view = "wishlist";
+      if (step === "recipient" && S.me) { S.me.revealed = true; call("/api/reveal").catch(() => {}); }
+      if (step === "done" && S.me) { S.me.bought = true; call("/api/bought").catch(() => {}); }
+      render(); return;
+    }
+    state.step = step; save(); render();
+  };
+
+  /* ---------- Настоящая игра: связь с сервером ---------- */
+  // Демо остаётся в обычном браузере и по ссылке с ?demo
+  const LIVE = !!(G.api && inTelegram) && !new URLSearchParams(location.search).has("demo");
+  let S = null;          // ответ сервера: кто я, статус игры, подопечный
+  let view = null;       // локальные экраны: "wishlist" | "admin"
+  const call = async (path, extra = {}) => {
+    const r = await fetch(G.api.replace(/\/$/, "") + path, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify(Object.assign({ initData: tg.initData }, extra))
+    });
+    const d = await r.json().catch(() => ({ ok: false, error: "network" }));
+    if (!d.ok) throw new Error(d.error || "error");
+    return d;
+  };
+  const refresh = async () => {
+    S = await call("/api/me");
+    G.participants = S.counts.approved;
+    if (S.me) { state.wishes = S.me.wishes || ""; state.notWanted = S.me.notWanted || ""; }
+  };
+  const liveStep = () => {
+    if (view === "admin") return "admin";
+    const m = S.me;
+    if (!m) return S.drawn ? "late" : (view === "wishlist" ? "wishlist" : "welcome");
+    if (m.status === "pending") return "pending";
+    if (m.status === "rejected") return "rejected";
+    if (!S.drawn) return "waiting";
+    if (!S.recipient) return "late";
+    if (!m.revealed) return "reveal";
+    return m.bought ? "done" : "recipient";
+  };
+  // подопечный: настоящий с сервера или демонстрационный
+  const recip = () => {
+    if (!(LIVE && S && S.recipient)) return G.demoRecipient;
+    const r = S.recipient;
+    return { name: r.name, dept: r.dept || "", wishes: lines(r.wishes || ""), notWanted: r.notWanted || "", color: "#1f3a8a" };
+  };
+  const signTip = r => r.forName ? `Подпиши «Для ${esc(r.forName)}», свою подпись не ставь` : "Подпиши подарок именем коллеги, свою подпись не ставь";
 
   /* ---------- Утилиты ---------- */
   const esc = (s = "") => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -125,7 +171,7 @@
   }
 
   if (THEME === "chrome" || THEME === "soft") {
-    const m = document.createElement("script"); m.type = "module"; m.src = "js/tree3d.js?v=27"; document.head.appendChild(m);
+    const m = document.createElement("script"); m.type = "module"; m.src = "js/tree3d.js?v=28"; document.head.appendChild(m);
   }
   const mount = html => {
     $app.innerHTML = `<section class="screen simple">${html}</section>`; window.scrollTo(0, 0);
@@ -316,7 +362,7 @@
         <div class="sf-row"><div><span>Бюджет подарка</span><b>до ${money(G.budget)}</b></div></div>
         <div class="sf-row"><div><span>Вручение</span><b>${fmtDate(G.exchangeDate)}, ${G.place}</b></div></div>
       </div>
-      <p class="sf-meta">${G.participants} ${plural(G.participants, ["коллега", "коллеги", "коллег"])} уже в игре · займёт минуту</p>
+      <p class="sf-meta">${G.participants >= 3 ? `${G.participants} ${plural(G.participants, ["коллега", "коллеги", "коллег"])} уже в игре · ` : ""}займёт минуту</p>
       <details class="sf-how">
         <summary>Как это работает</summary>
         <ol>
@@ -340,6 +386,14 @@
       <p class="lead">Напиши 2–3 идеи — каждую с новой строки. Чем конкретнее, тем легче Санте угадать: можно добавить любимый цвет или размер.</p>
 
       <div class="section paper paper--pad">
+        ${LIVE ? `<label class="field">
+          <span class="field__label">Как тебя зовут (имя и фамилия)</span>
+          <input class="input" id="w-name" autocomplete="name" value="${esc(((S.user.firstName || "") + " " + (S.user.lastName || "")).trim())}" placeholder="Например: Анна Иванова" />
+        </label>
+        <label class="field">
+          <span class="field__label">Отдел (можно пропустить)</span>
+          <input class="input" id="w-dept" placeholder="Например: сметно-договорный отдел" />
+        </label>` : ""}
         <label class="field">
           <span class="field__label">Мне будет приятно получить</span>
           <textarea class="textarea textarea--big" id="w-wishes" placeholder="Например:&#10;тёплый плед в клетку&#10;хороший чай&#10;книга о путешествиях">${esc(state.wishes)}</textarea>
@@ -368,6 +422,21 @@
       const wishes = document.getElementById("w-wishes").value.trim();
       const notWanted = document.getElementById("w-not").value.trim();
       if (!wishes) { haptic("error"); toast("Напиши хотя бы одно пожелание"); document.getElementById("w-wishes").focus(); return; }
+      if (LIVE) {
+        const name = document.getElementById("w-name").value.trim();
+        const dept = document.getElementById("w-dept").value.trim();
+        if (name.length < 2) { haptic("error"); toast("Напиши, как тебя зовут"); document.getElementById("w-name").focus(); return; }
+        confirmDialog("Всё верно? Заявка уйдёт организатору, а пожелания — твоему Санте. Поменять их потом можно только через организатора.", () => {
+          const send = () => call("/api/join", { name, dept, wishes, notWanted })
+            .then(refresh).then(() => { view = null; haptic("success"); render(); })
+            .catch(() => { haptic("error"); toast("Не получилось отправить. Попробуй ещё раз"); });
+          // разрешение боту писать — чтобы прислать результат жеребьёвки
+          const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
+          if (tg.requestWriteAccess && !(u && u.allows_write_to_pm)) { try { tg.requestWriteAccess(() => send()); } catch (e) { send(); } }
+          else send();
+        });
+        return;
+      }
       confirmDialog("Всё верно? Пожелания отправятся твоему Санте. Поменять их потом можно только через организатора.", () => {
         state.wishes = wishes; state.notWanted = notWanted;
         haptic("success");
@@ -406,13 +475,13 @@
         <button type="button" class="btn btn--ghost-ink btn--block" id="share">Позвать коллегу</button>
       </div>
 
-      <button class="demo-link${CR ? " cr-link" : ""}" id="demo-draw">Демо: показать, что будет после жеребьёвки</button>
+      ${LIVE ? "" : `<button class="demo-link${CR ? " cr-link" : ""}" id="demo-draw">Демо: показать, что будет после жеребьёвки</button>`}
     `);
     document.getElementById("share").onclick = () => {
       const url = "https://t.me/share/url?url=" + encodeURIComponent("https://t.me/SecretRGameBot/santa") + "&text=" + encodeURIComponent("Я уже в Тайном Санте Р-СТРОЙ! Присоединяйся — займёт минуту ✨");
       inTelegram ? tg.openTelegramLink(url) : window.open(url, "_blank");
     };
-    document.getElementById("demo-draw").onclick = () => goStep("reveal");
+    if (!LIVE) document.getElementById("demo-draw").onclick = () => goStep("reveal");
     if (inTelegram) setMain("Закрыть", () => tg.close()); else hideMain();
   }
 
@@ -420,7 +489,7 @@
      4. Жеребьёвка — подарок поступает по газопроводу
      ======================================================= */
   function renderReveal() {
-    const r = G.demoRecipient;
+    const r = recip();
     if (THEME === "ice" || THEME === "chrome" || THEME === "soft") return renderMelt(r);
     mount(`
       ${masthead()}
@@ -500,7 +569,7 @@
      5. Подопечный
      ======================================================= */
   function recipientCard() {
-    const r = G.demoRecipient;
+    const r = recip();
     if (CR) return `
       <div class="cr-ticket cr-ticket--who">
         <div class="cr-ticket__body">
@@ -519,7 +588,7 @@
         <ol>
           <li><i>01</i><span>Перечитай пожелания ещё раз перед покупкой</span></li>
           <li><i>02</i><span>Держись бюджета — до ${money(G.budget)}</span></li>
-          <li><i>03</i><span>Подпиши «Для ${esc(r.forName || r.name.split(" ")[0])}», свою подпись не ставь</span></li>
+          <li><i>03</i><span>${signTip(r)}</span></li>
           <li><i>04</i><span>Вручи ${fmtDate(G.exchangeDate)} ${G.place}</span></li>
         </ol>
       </div>
@@ -543,7 +612,7 @@
         <div class="paper">
           <div class="fact fact--n"><span class="fact__n">01</span><span>Перечитай пожелания ещё раз перед покупкой</span></div>
           <div class="fact fact--n"><span class="fact__n">02</span><span>Держись бюджета — до ${money(G.budget)}</span></div>
-          <div class="fact fact--n"><span class="fact__n">03</span><span>Подпиши «Для ${esc(r.forName || r.name.split(" ")[0])}», свою подпись не ставь</span></div>
+          <div class="fact fact--n"><span class="fact__n">03</span><span>${signTip(r)}</span></div>
           <div class="fact fact--n"><span class="fact__n">04</span><span>Вручи ${fmtDate(G.exchangeDate)} ${G.place}</span></div>
         </div>
       </div>
@@ -573,8 +642,140 @@
   }
 
   /* ---------- Отрисовка по шагу ---------- */
-  const screens = { welcome: renderWelcome, wishlist: renderWishlist, waiting: renderWaiting, reveal: renderReveal, recipient: renderRecipient, done: renderDone };
-  function render() { hideMain(); (screens[state.step] || renderWelcome)(); }
+
+  /* =======================================================
+     Настоящая игра: заявка, отказ, опоздание, панель организатора
+     ======================================================= */
+  const myWishes = () => state.wishes ? `<div class="section">
+      <div class="section__head"><span class="section__title">Твои пожелания</span></div>
+      ${CR ? crList(lines(state.wishes), state.notWanted) : `<div class="paper">
+        ${lines(state.wishes).map((w, i) => `<div class="wish"><div class="wish__num">${String(i + 1).padStart(2, "0")}</div><div class="wish__body">${esc(w)}</div></div>`).join("")}
+        ${state.notWanted ? `<div class="kv"><div class="kv__k">Не дарить</div><div class="kv__v">${esc(state.notWanted)}</div></div>` : ""}
+      </div>`}
+    </div>` : "";
+  const closeBtn = () => { if (inTelegram) setMain("Закрыть", () => tg.close()); else hideMain(); };
+
+  function renderPending() {
+    mount(`
+      ${masthead()}
+      ${stepper(1, "<b>Р‑СТРОЙ</b> собирает пожелания")}
+      <div class="bigstate">
+        ${bigMark()}
+        <h1>Заявка отправлена!</h1>
+        <p class="lead">Организатор подтвердит участие, и бот пришлёт сообщение. Жеребьёвка — <b>${fmtDate(G.drawDate)}</b>. А пока можно присматриваться к идеям и ждать чуда.</p>
+      </div>
+      ${myWishes()}
+      <p class="hint">Нужно что-то поменять — напиши организатору игры.</p>
+    `);
+    closeBtn();
+  }
+  function renderRejected() {
+    mount(`${masthead()}<div class="bigstate">${bigMark()}<h1>Участие не подтверждено</h1>
+      <p class="lead">Организатор не подтвердил заявку. Если это ошибка — напиши организатору игры.</p></div>`);
+    closeBtn();
+  }
+  function renderLate() {
+    mount(`${masthead()}<div class="bigstate">${bigMark()}<h1>Жеребьёвка уже прошла</h1>
+      <p class="lead">В этом году пары уже распределены. Напиши организатору — возможно, получится что-то придумать.</p></div>`);
+    closeBtn();
+  }
+
+  async function notifyAll(retry = false) {
+    let sent = 0;
+    for (let i = 0; i < 15; i++) {
+      const d = await call("/api/admin/notify", i === 0 && retry ? { retry: true } : {});
+      sent += d.sent;
+      if (!d.left) break;
+    }
+    return sent;
+  }
+
+  async function renderAdmin() {
+    mount(`${masthead()}<h1 class="screen-title">Панель организатора</h1><p class="lead">Загружаю список…</p>`);
+    hideMain();
+    let d;
+    try { d = await call("/api/admin/list"); } catch (e) { toast("Не удалось загрузить список"); return; }
+    if (view !== "admin") return;
+    const by = st => d.list.filter(p => p.status === st);
+    const pend = by("pending"), appr = by("approved"), rej = by("rejected");
+    const sub = p => esc([p.dept, p.username && "@" + p.username].filter(Boolean).join(" · "));
+    const row = (p, acts) => `<div class="adm-row"><div class="adm-row__who"><b>${esc(p.name)}</b><span>${sub(p)}</span></div><div class="adm-row__act">${acts}</div></div>`;
+    const btn = (id, st, t, cls = "") => `<button type="button" class="adm-btn ${cls}" data-id="${id}" data-st="${st}">${t}</button>`;
+    const bought = appr.filter(p => p.bought).length;
+    mount(`
+      ${masthead()}
+      <h1 class="screen-title">Панель организатора</h1>
+      <div class="facts paper">
+        <div class="fact fact--t"><span class="fact__k">В игре</span><span class="fact__v">${appr.length} ${plural(appr.length, ["участник", "участника", "участников"])}</span></div>
+        <div class="fact fact--t"><span class="fact__k">Ждут подтверждения</span><span class="fact__v">${pend.length}</span></div>
+        <div class="fact fact--t"><span class="fact__k">Жеребьёвка</span><span class="fact__v">${d.drawn ? `проведена · подарки купили ${bought} из ${appr.length}` : `ещё не проводилась · план — ${fmtDate(G.drawDate)}`}</span></div>
+      </div>
+      ${pend.length ? `<div class="section">
+        <div class="section__head"><span class="section__title">Ждут подтверждения</span></div>
+        <div class="paper">${pend.map(p => row(p, btn(p.tg_id, "approved", "Одобрить", "adm-btn--yes") + btn(p.tg_id, "rejected", "Отклонить"))).join("")}</div>
+        ${pend.length > 1 ? `<button type="button" class="btn btn--ghost-ink btn--block adm-all" id="adm-all">Одобрить всех (${pend.length})</button>` : ""}
+      </div>` : ""}
+      <div class="section">
+        <div class="section__head"><span class="section__title">В игре</span></div>
+        ${appr.length ? `<div class="paper">${appr.map(p => row(p, d.drawn ? `<span class="adm-tag">${p.bought ? "подарок куплен" : "ещё выбирает"}</span>` : btn(p.tg_id, "rejected", "Убрать"))).join("")}</div>` : `<p class="hint">Пока никого — одобрите заявки выше.</p>`}
+      </div>
+      ${rej.length ? `<div class="section">
+        <div class="section__head"><span class="section__title">Отклонены</span></div>
+        <div class="paper">${rej.map(p => row(p, d.drawn ? "" : btn(p.tg_id, "approved", "Вернуть"))).join("")}</div>
+      </div>` : ""}
+      <p class="hint">Ссылка для коллег: t.me/SecretRGameBot/santa</p>
+      <button type="button" class="demo-link" id="adm-back">Вернуться в игру</button>
+    `);
+    document.getElementById("adm-back").onclick = () => { view = null; refresh().then(render).catch(render); };
+    document.querySelectorAll(".adm-btn[data-id]").forEach(b => b.onclick = async () => {
+      b.disabled = true;
+      try { await call("/api/admin/set", { id: Number(b.dataset.id), status: b.dataset.st }); haptic("success"); }
+      catch (e) { toast("Не получилось, попробуйте ещё раз"); }
+      renderAdmin();
+    });
+    const all = document.getElementById("adm-all");
+    if (all) all.onclick = async () => {
+      all.disabled = true;
+      const ids = pend.map(p => p.tg_id);
+      try { for (let i = 0; i < ids.length; i += 10) await call("/api/admin/set", { ids: ids.slice(i, i + 10), status: "approved" }); haptic("success"); }
+      catch (e) { toast("Одобрены не все — попробуйте ещё раз"); }
+      renderAdmin();
+    };
+    if (!d.drawn) {
+      setMain("Провести жеребьёвку", () => {
+        if (appr.length < 3) { haptic("error"); toast("Нужно хотя бы 3 участника"); return; }
+        confirmDialog(`Провести жеребьёвку для ${appr.length} ${plural(appr.length, ["участника", "участников", "участников"])}? После этого состав изменить нельзя.${pend.length ? ` Заявки без ответа (${pend.length}) в игру не попадут.` : ""}`, async () => {
+          try {
+            await call("/api/admin/draw");
+            toast("Жеребьёвка проведена! Рассылаю сообщения…");
+            const n = await notifyAll();
+            haptic("success"); toast(`Готово: сообщения получили ${n}`);
+          } catch (e) { haptic("error"); toast("Не получилось провести жеребьёвку"); }
+          await refresh().catch(() => {});
+          renderAdmin();
+        }, "Да, провести", "Пока нет");
+      });
+    } else if (appr.some(p => p.notified !== 1)) {
+      setMain("Разослать сообщения ещё раз", async () => {
+        try { const n = await notifyAll(true); toast(`Отправлено: ${n}`); } catch (e) { toast("Не получилось отправить"); }
+        renderAdmin();
+      });
+    }
+  }
+
+  const screens = { pending: renderPending, rejected: renderRejected, late: renderLate, admin: renderAdmin, welcome: renderWelcome, wishlist: renderWishlist, waiting: renderWaiting, reveal: renderReveal, recipient: renderRecipient, done: renderDone };
+  function render() {
+    hideMain();
+    const st = LIVE ? liveStep() : state.step;
+    (screens[st] || renderWelcome)();
+    // организатору — вход в панель с любого экрана игры
+    if (LIVE && S.admin && st !== "admin") {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "demo-link adm-link"; b.textContent = "Панель организатора";
+      b.onclick = () => { view = "admin"; render(); };
+      const sec = $app.querySelector(".screen"); if (sec) sec.appendChild(b);
+    }
+  }
 
   /* ---------- Снегопад ---------- */
   (function snowfall() {
@@ -603,5 +804,11 @@
   /* демо-просмотр конкретного шага: ?step=wishlist и т. п. */
   const forced = new URLSearchParams(location.search).get("step");
   if (forced && screens[forced]) state.step = forced;
-  render();
+  if (LIVE) {
+    mount(`<div class="bigstate" style="margin-top:30vh"><p class="lead">Загружаю игру…</p></div>`);
+    refresh().then(render).catch(() => {
+      mount(`<div class="bigstate">${bigMark()}<h1>Нет связи с игрой</h1><p class="lead">Проверь интернет и открой приложение ещё раз.</p></div>`);
+      if (inTelegram) setMain("Попробовать снова", () => location.reload());
+    });
+  } else render();
 })();

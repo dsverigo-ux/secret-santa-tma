@@ -624,3 +624,18 @@ body.has-fallback-back .app { padding-top: 60px; }
 .note { display: block; }
 .cr-tree--sm { width: 150px; height: 170px; margin: 0 auto 4px; }
 .stepper__label b { font-weight: 800; }
+
+/* ===== Панель организатора ===== */
+.adm-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 16px; }
+.adm-row + .adm-row { border-top: 1px solid var(--line-light); }
+.adm-row__who { min-width: 0; }
+.adm-row__who b { display: block; font-weight: 800; }
+.adm-row__who span { display: block; font-size: 13px; opacity: .65; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-row__act { display: flex; gap: 6px; flex: none; }
+.adm-btn { border: 0; border-radius: 99px; padding: 9px 13px; font: 700 13px var(--f-body); background: rgba(0, 0, 0, .06); color: inherit; cursor: pointer; }
+.adm-btn--yes { background: var(--navy, #1f3a8a); color: #fff; }
+.adm-btn:disabled { opacity: .5; }
+.adm-tag { font-size: 13px; font-weight: 700; opacity: .7; }
+.adm-all { margin-top: 14px; }
+.adm-link { display: block; margin: 26px auto 0; }
+.input { width: 100%; }

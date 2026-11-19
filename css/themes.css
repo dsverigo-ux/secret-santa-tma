@@ -1245,3 +1245,8 @@
 [data-theme="soft"] .screen-title { margin-bottom: 30px; position: relative; z-index: 1; }
 [data-theme="soft"] .section__title, [data-theme="soft"] .section__head { position: relative; z-index: 1; }
 [data-theme="soft"] .section__head { margin-bottom: 18px; }
+[data-theme="soft"] .adm-row { padding: 14px 20px; }
+[data-theme="soft"] .adm-btn { background: var(--s-bg); box-shadow: var(--s-up-sm); color: var(--s-ink); font-family: "Manrope", sans-serif; }
+[data-theme="soft"] .adm-btn--yes { background: var(--s-blue); color: #fff; box-shadow: 0 6px 14px -6px rgba(31, 58, 138, .6); }
+[data-theme="soft"] .input { height: 54px; }
+[data-theme="soft"] .screen-title + .facts { margin-top: 6px; }
