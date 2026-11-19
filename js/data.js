@@ -3,7 +3,7 @@ window.GAME = {
   /* адрес сервера (Cloudflare Worker). Пусто — приложение работает в демо-режиме */
   api: "",
   title: "Новый год Р-СТРОЙ",
-  budget: 3000,
+  budget: 2000,
   currency: "₽",
   drawDate: "2026-11-30",       // жеребьёвка
   exchangeDate: "2026-12-21",   // вручение подарков

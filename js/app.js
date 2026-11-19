@@ -171,7 +171,7 @@
   }
 
   if (THEME === "chrome" || THEME === "soft") {
-    const m = document.createElement("script"); m.type = "module"; m.src = "js/tree3d.js?v=28"; document.head.appendChild(m);
+    const m = document.createElement("script"); m.type = "module"; m.src = "js/tree3d.js?v=29"; document.head.appendChild(m);
   }
   const mount = html => {
     $app.innerHTML = `<section class="screen simple">${html}</section>`; window.scrollTo(0, 0);
