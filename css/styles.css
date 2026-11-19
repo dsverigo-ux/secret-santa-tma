@@ -21,7 +21,7 @@
 
   --r: 10px;
   --r-sm: 8px;
-  --safe-top: var(--tg-content-safe-area-inset-top, 0px);
+  --safe-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px));
   --safe-bottom: var(--tg-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
 
   --f-body: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -537,3 +537,90 @@ body.has-fallback-back .app { padding-top: 60px; }
   animation-name: snowfall, glint; animation-timing-function: linear, ease-in-out; animation-iteration-count: infinite, infinite;
 }
 @keyframes glint { 0%, 100% { opacity: .25; } 45% { opacity: 1; } 55% { opacity: .9; } }
+
+/* выделенное слово похвалы — как маркером */
+.praise { font-weight: 800; font-size: 1.12em; padding: 0 .12em; border-radius: 4px;
+  background: linear-gradient(transparent 55%, rgba(236, 217, 168, .75) 55%); }
+
+/* =========================================================
+   Продающий первый экран и новые элементы
+   ========================================================= */
+.rise { animation: riseIn .9s cubic-bezier(.2, .8, .2, 1) both; animation-delay: var(--d, 0s); }
+@keyframes riseIn { from { opacity: 0; transform: translateY(14px); } }
+@media (prefers-reduced-motion: reduce) { .rise { animation: none; } }
+
+.hook { font-size: 22px; line-height: 1.4; margin: 20px 0 0; font-weight: 600; }
+
+.pp { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+.pp__avs { display: flex; }
+.pp__av { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; margin-left: -10px;
+  font: 600 12px var(--f-body); color: #fff; box-shadow: 0 0 0 2px var(--pp-ring, #fff); }
+.pp__av:first-child { margin-left: 0; }
+.pp__more { background: #1c2a4a; font-size: 11px; }
+.pp__txt { font-size: 15px; line-height: 1.3; }
+
+.countdown { margin-top: 22px; padding: 16px 0; border-top: 1px solid rgba(127, 127, 127, .25); border-bottom: 1px solid rgba(127, 127, 127, .25);
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.countdown__label { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; opacity: .7; }
+.countdown__nums { display: flex; gap: 14px; }
+.countdown__nums span { font-size: 13px; opacity: .85; }
+.countdown__nums b { font-size: 28px; font-weight: 500; margin-right: 3px; opacity: 1; }
+
+.beats { margin-top: 26px; display: grid; gap: 18px; }
+.beat { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; }
+.beat__n { font: italic 400 22px/1.1 var(--f-script); opacity: .5; }
+.beat b { display: block; font-size: 18px; font-weight: 600; margin-bottom: 2px; }
+.beat span { font-size: 15px; opacity: .75; line-height: 1.4; }
+
+.how { margin-top: 26px; border-top: 1px solid rgba(127, 127, 127, .25); border-bottom: 1px solid rgba(127, 127, 127, .25); }
+.how summary { list-style: none; cursor: pointer; padding: 16px 0; font-size: 17px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+.how summary::-webkit-details-marker { display: none; }
+.how summary::after { content: "+"; font-size: 24px; font-weight: 300; transition: transform .3s; }
+.how[open] summary::after { transform: rotate(45deg); }
+.how .rules { padding-bottom: 6px; }
+.how__secret { margin: 0 0 16px; font-size: 15px; opacity: .8; }
+.micro { text-align: center; font-size: 13px; opacity: .6; margin: 18px 0 0; }
+
+.chips-wrap { margin-top: 18px; }
+.chips__label { font-size: 13px; opacity: .65; margin-bottom: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-idea { border: 1px solid rgba(127, 127, 127, .4); background: rgba(255, 255, 255, .5); color: inherit; font: 500 15px var(--f-body);
+  padding: 10px 14px; border-radius: 99px; cursor: pointer; transition: all .2s; }
+.chip-idea.is-on { background: #1c2a4a; color: #fff; border-color: #1c2a4a; }
+.chip-idea.is-on::before { content: "✓ "; }
+
+.invite-cta p { font-size: 16px; line-height: 1.5; margin: 0 0 12px; opacity: .85; }
+.btn--ghost-ink { background: transparent; color: inherit; box-shadow: inset 0 0 0 1px currentColor; padding: 17px; }
+
+/* «Растопи лёд» */
+.melt { position: relative; margin: 22px -16px 0; height: 420px; overflow: hidden; cursor: pointer; }
+.melt__photo { position: absolute; inset: 0; background: var(--ice-photo, #1c2a4a) var(--ice-pos, center) / cover; transform: scale(1.08); transition: transform 2.4s ease; }
+.melt__photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20, 32, 60, .25), rgba(20, 32, 60, .72)); }
+.melt__name { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; justify-content: flex-end; padding: 26px 20px; color: #fff; }
+.melt__eyebrow { font-size: 12px; letter-spacing: .26em; text-transform: uppercase; opacity: .85; }
+.melt__who { font: 400 54px/1 var(--f-wide); margin-top: 10px; }
+.melt__who em { font-style: italic; }
+.melt__dept { margin-top: 10px; font-size: 15px; opacity: .85; }
+.melt__frost { position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  -webkit-backdrop-filter: blur(22px) saturate(140%) brightness(1.15); backdrop-filter: blur(22px) saturate(140%) brightness(1.15);
+  background:
+    radial-gradient(60% 40% at 30% 30%, rgba(255, 255, 255, .55), transparent 70%),
+    radial-gradient(50% 50% at 70% 70%, rgba(220, 235, 250, .5), transparent 70%),
+    rgba(235, 242, 250, .45);
+  transition: opacity 2.2s ease, -webkit-backdrop-filter 2.2s ease, backdrop-filter 2.2s ease;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 60%, #000 100%); mask-image: radial-gradient(circle at 50% 50%, #000 60%, #000 100%); }
+.melt__frost::after { content: "коснись, чтобы растопить"; position: absolute; left: 0; right: 0; top: 50%; text-align: center;
+  font: italic 400 20px var(--f-wide); color: #1c2a4a; opacity: .75; transition: opacity .6s; }
+.melt.is-melted .melt__frost { opacity: 0; -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); }
+.melt.is-melted .melt__frost::after { opacity: 0; }
+.melt.is-melted .melt__photo { transform: scale(1); }
+
+/* ===== Факты и подсказки без иконок: типографика вместо значков ===== */
+.fact--t { display: grid; grid-template-columns: 1fr; gap: 3px; }
+.fact--t .fact__k { font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; opacity: .6; }
+.fact--t .fact__v { font-size: 18px; font-weight: 700; line-height: 1.3; }
+.fact--n { display: grid; grid-template-columns: 34px 1fr; align-items: baseline; gap: 10px; }
+.fact__n { font-size: 15px; font-weight: 800; letter-spacing: .02em; color: var(--red, #c8102e); font-variant-numeric: tabular-nums; }
+.note { display: block; }
+.cr-tree--sm { width: 150px; height: 170px; margin: 0 auto 4px; }
+.stepper__label b { font-weight: 800; }

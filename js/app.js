@@ -14,9 +14,10 @@
   const hero = (window.ART.heroes && window.ART.heroes[THEME]) || window.ART.hero;
   const $app = document.getElementById("app");
 
-  const BRAND = {
-    bg: ({ aurora: "#050b14", retro: "#efe3c8", neon: "#07070c", velvet: "#0c2416", frost: "#eef3f9", minimal: "#eeedea", cozy: "#5b7fd6", dusk: "#2a3a72", crystal: "#3a5a7c" })[THEME] || "#111b3a",
-    btn: ({ neon: "#ff3b30", velvet: "#f5f7ef", minimal: "#1a1a1a", cozy: "#c8352b", crystal: "#ffffff" })[THEME] || "#b3261e",
+  const VARIANT = document.documentElement.dataset.variant;
+  const BRAND = VARIANT === "ruby" ? { bg: "#5a1111", btn: "#f5efe8", btnText: "#5a1111" } : {
+    bg: ({ aurora: "#050b14", retro: "#efe3c8", neon: "#07070c", velvet: "#0c2416", frost: "#eef3f9", minimal: "#eeedea", cozy: "#5b7fd6", dusk: "#2a3a72", crystal: "#3a5a7c", window: "#16224a", gift: "#f2f2f2", ice: "#e8edf3", chrome: "#e6e6e8", soft: "#e6e9f0" })[THEME] || "#111b3a",
+    btn: ({ neon: "#ff3b30", velvet: "#f5f7ef", minimal: "#1a1a1a", cozy: "#c8352b", crystal: "#ffffff", gift: "#c8262b", ice: "#1c2a4a", chrome: "#000000", soft: "#1f3a8a" })[THEME] || "#b3261e",
     btnText: ({ velvet: "#0c2416", crystal: "#1f2f5c" })[THEME] || "#ffffff"
   };
 
@@ -25,6 +26,10 @@
   if (inTelegram) {
     tg.ready();
     tg.expand();
+    /* на телефонах — сразу на весь экран (Telegram 8.0+) */
+    try {
+      if (tg.requestFullscreen && tg.isVersionAtLeast && tg.isVersionAtLeast("8.0") && ["ios", "android"].includes(tg.platform) && !tg.isFullscreen) tg.requestFullscreen();
+    } catch (e) { /* старые клиенты остаются в обычном режиме */ }
     try {
       tg.setHeaderColor(BRAND.bg);
       tg.setBackgroundColor(BRAND.bg);
@@ -119,23 +124,54 @@
     mainHandler = null;
   }
 
-  const mount = html => { $app.innerHTML = `<section class="screen simple">${html}</section>`; window.scrollTo(0, 0); };
-  const masthead = () => `
+  if (THEME === "chrome" || THEME === "soft") {
+    const m = document.createElement("script"); m.type = "module"; m.src = "js/tree3d.js?v=26"; document.head.appendChild(m);
+  }
+  const mount = html => {
+    $app.innerHTML = `<section class="screen simple">${html}</section>`; window.scrollTo(0, 0);
+    if (window.mountTree3D) window.mountTree3D();
+  };
+  const masthead = () => THEME === "soft" ? SF.garland() : `
     <div class="masthead"><b>Р-СТРОЙ</b><span class="masthead__dot"></span><span>Тайный Санта</span><span class="masthead__dot"></span><span>Зима 2027</span></div>`;
   const stepper = (n, label) => `
     <div class="stepper"><span class="stepper__n">Шаг ${n} из 3</span><span class="stepper__label">${label}</span>
       <span class="stepper__bar"><i style="width:${n / 3 * 100}%"></i></span></div>`;
   const facts = () => `
     <div class="facts paper">
-      <div class="fact"><span class="fact__ic">${icon("wallet")}</span><span><b>Бюджет подарка</b> — до ${money(G.budget)}</span></div>
-      <div class="fact"><span class="fact__ic">${icon("shuffle")}</span><span><b>Жеребьёвка</b> — ${fmtDate(G.drawDate)}</span></div>
-      <div class="fact"><span class="fact__ic">${icon("gift")}</span><span><b>Вручение</b> — ${fmtDate(G.exchangeDate)}, ${G.place}</span></div>
+      <div class="fact fact--t"><span class="fact__k">Бюджет подарка</span><span class="fact__v">до ${money(G.budget)}</span></div>
+      <div class="fact fact--t"><span class="fact__k">Жеребьёвка</span><span class="fact__v">${fmtDate(G.drawDate)}</span></div>
+      <div class="fact fact--t"><span class="fact__k">Вручение</span><span class="fact__v">${fmtDate(G.exchangeDate)}, ${G.place}</span></div>
     </div>`;
+
+
+  /* ---------- «Хром»: блоки без типовых карточек ---------- */
+  const CR = THEME === "chrome";
+  const crTicket = () => `
+    <div class="cr-ticket">
+      <div class="cr-ticket__body">
+        <div><span>бюджет</span><b>до ${money(G.budget)}</b></div>
+        <div><span>жеребьёвка</span><b>${fmtDate(G.drawDate)}</b></div>
+        <div><span>вручение</span><b>${fmtDate(G.exchangeDate)}</b><em>${G.place}</em></div>
+      </div>
+      <div class="cr-coupon__stub"><span>главное</span></div>
+    </div>`;
+  const crList = (items, notWanted) => `
+    <ol class="cr-list">
+      ${items.map((w, i) => `<li><i>${String(i + 1).padStart(2, "0")}</i><span>${esc(w)}</span></li>`).join("")}
+    </ol>
+    ${notWanted ? `<div class="cr-no"><span class="cr-pill cr-pill--dark">не дарить</span><p>${esc(notWanted)}</p></div>` : ""}`;
+  const crBand = (text) => `<div class="cr-band cr-band--static"><div class="cr-band__run">${`<span>${text}</span><span>✦</span>`.repeat(6)}</div></div>`;
 
   /* =======================================================
      1. Знакомство и правила
      ======================================================= */
+  // Без иконок: в «Хроме» — маленькая 3D-ёлочка, в остальных темах — ничего
+  const bigMark = () => THEME === "chrome" ? `<div class="cr-tree cr-tree--sm" data-tree3d></div>` : THEME === "soft" ? `<div class="sf-badge"><div class="sf-badge__tree" data-tree3d="plain"></div></div>` : "";
+
   function renderWelcome() {
+    if (THEME === "chrome") return renderWelcomeChrome();
+    if (THEME === "soft") return renderWelcomeSoft();
+    const avatars = (G.joined || []).map(p => `<span class="pp__av" style="background:${p.c}">${p.i}</span>`).join("");
     mount(`
       ${masthead()}
       <div class="title-block">
@@ -144,33 +180,153 @@
         <div class="title-block__note">${nb("Новый год<br>Р-СТРОЙ")}</div>
         <div class="title-block__date">${G.exchangeDate.split("-").reverse().join("/")}</div>
       </div>
-      <div class="scene">${hero}<div class="scene__corner"></div></div>
+      <div class="scene">${hero.replace("{{date}}", G.exchangeDate.split("-").reverse().join(" · "))}<div class="scene__corner"></div></div>
 
-      <p class="lead"><b>Привет, ${esc(userName)}!</b><br>Это Тайный Санта ${nb("Р-СТРОЙ")} — наша новогодняя игра. В ней у каждого появляется своя маленькая новогодняя тайна: ты тайно готовишь подарок одному коллеге, а кто-то другой — сюрприз для тебя. От кого — узнаешь только в праздник.</p>
+      <p class="hook rise" style="--d:.05s">В этом году кто-то из коллег станет твоим Тайным Сантой. А&nbsp;ты&nbsp;— чьим-то.</p>
 
-      <div class="section">
-        <div class="section__head"><span class="section__title">Какие правила?</span></div>
+      <div class="pp rise" style="--d:.15s">
+        <div class="pp__avs">${avatars}<span class="pp__av pp__more">+${G.participants - (G.joined || []).length}</span></div>
+        <div class="pp__txt"><b>${G.participants} ${plural(G.participants, ["коллега", "коллеги", "коллег"])}</b> уже в игре</div>
+      </div>
+
+      <div class="countdown rise" style="--d:.25s" aria-live="polite">
+        <div class="countdown__label">До жеребьёвки</div>
+        <div class="countdown__nums" id="cd"></div>
+      </div>
+
+      <div class="beats rise" style="--d:.35s">
+        <div class="beat"><span class="beat__n">i</span><div><b>Подарок, который правда хочется</b><span>Санта выберет его по твоему списку желаний</span></div></div>
+        <div class="beat"><span class="beat__n">ii</span><div><b>Интрига до самого праздника</b><span>Кто тебе дарит — узнаешь только ${fmtDate(G.exchangeDate)}</span></div></div>
+        <div class="beat"><span class="beat__n">iii</span><div><b>Повод порадовать коллегу</b><span>Без лишних слов — просто подарок под ёлкой</span></div></div>
+      </div>
+
+      <details class="how rise" style="--d:.45s">
+        <summary>Как это работает</summary>
         <ol class="rules">
-          <li><b>Расскажи о своих желаниях.</b> Напиши 2–3 идеи подарка — их прочитает только твой Тайный Санта.</li>
-          <li><b>${fmtDate(G.drawDate)} узнай, кому даришь ты.</b> Придёт сообщение в Telegram с именем коллеги и его пожеланиями.</li>
-          <li><b>Подготовь подарок до ${money(G.budget)}.</b> Упакуй и подпиши имя получателя, а своё — не пиши.</li>
-          <li><b>${fmtDate(G.exchangeDate)} вручи подарок ${G.place}.</b> Положи его под ёлку — и смотри, как случается чудо.</li>
+          <li><b>Расскажи о своих желаниях.</b> 2–3 идеи — их прочитает только твой Санта.</li>
+          <li><b>${fmtDate(G.drawDate)} узнай, кому даришь ты.</b> Придёт сообщение в Telegram.</li>
+          <li><b>Подготовь подарок до ${money(G.budget)}.</b> Подпиши имя получателя, своё — нет.</li>
+          <li><b>${fmtDate(G.exchangeDate)} вручи его ${G.place}.</b> И смотри, как случается чудо.</li>
         </ol>
-      </div>
+        <p class="how__secret">Главное правило — тайна. Никому не говори, кому даришь.</p>
+      </details>
 
-      <div class="section">
-        <div class="section__head"><span class="section__title">Твои возможности</span></div>
-        <div class="paper">
-          <div class="fact"><span class="fact__ic">${icon("list")}</span><span>Рассказать, какой подарок тебя обрадует</span></div>
-          <div class="fact"><span class="fact__ic">${icon("gift")}</span><span>Узнать, кому даришь, и что хочет получить подопечный</span></div>
-          <div class="fact"><span class="fact__ic">${icon("check")}</span><span>Отметить, что подарок готов</span></div>
-        </div>
-      </div>
-
-      <div class="section note">${icon("secret")}<div><b>Главное — сохранить тайну.</b> Никому не рассказывай, кому даришь, до самого праздника. В этом вся магия.</div></div>
-      <p class="hint">${icon("help", "i--sm")}Участие — по желанию. Если что-то непонятно, напиши организатору.</p>
+      <p class="micro rise" style="--d:.5s">Займёт минуту · участие по желанию</p>
     `);
-    setMain("Поехали!", () => goStep("wishlist"));
+    const cd = document.getElementById("cd");
+    const tick = () => {
+      const ms = Math.max(0, new Date(G.drawDate + "T10:00:00") - new Date());
+      const d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60;
+      cd.innerHTML = `<span><b>${d}</b>${plural(d, ["день", "дня", "дней"])}</span><span><b>${String(h).padStart(2, "0")}</b>ч</span><span><b>${String(m).padStart(2, "0")}</b>мин</span>`;
+    };
+    tick(); clearInterval(renderWelcome.t); renderWelcome.t = setInterval(tick, 30000);
+    setMain("Участвую!", () => goStep("wishlist"));
+  }
+
+
+  /* Главный экран в стиле «хром + пилюли»: объёмная ёлка, цифры, купоны-шаги, бегущая строка */
+  function renderWelcomeChrome() {
+    const d = daysLeft(G.drawDate);
+    const steps = [
+      ["шаг 1", "расскажи о&nbsp;желаниях", "2–3 идеи подарка — увидит только твой Санта", "желания"],
+      ["шаг 2", "узнай, кому даришь", `${fmtDate(G.drawDate)} придёт сообщение в Telegram`, "жеребьёвка"],
+      ["шаг 3", `подари подарок до&nbsp;${money(G.budget)}`, `${fmtDate(G.exchangeDate)} ${G.place}`, "праздник"]
+    ];
+    mount(`
+      <div class="cr-top rise" style="--d:0s"><span class="cr-pill cr-pill--dark">новогодняя игра ${nb("Р-СТРОЙ")}</span></div>
+      <h1 class="cr-title rise" style="--d:.05s">тайный санта</h1>
+      <div class="cr-tree" data-tree3d aria-label="Хромированная ёлка медленно поворачивается"></div>
+      <div class="cr-stats rise" style="--d:.15s">
+        <div><span class="cr-stats__k">в игре</span><b>${G.participants}</b><span class="cr-stats__u">${plural(G.participants, ["коллега", "коллеги", "коллег"])}</span></div>
+        <i></i>
+        <div><span class="cr-stats__k">до жеребьёвки</span><b>${d}</b><span class="cr-stats__u">${plural(d, ["день", "дня", "дней"])}</span></div>
+      </div>
+      <p class="cr-hook rise" style="--d:.25s">В этом году кто-то из коллег станет твоим Тайным Сантой. А ты — чьим-то.</p>
+
+      <div class="cr-coupons rise" style="--d:.35s">
+        ${steps.map(([n, t, sub, stub]) => `
+          <div class="cr-coupon">
+            <div class="cr-coupon__body"><span class="cr-coupon__n">${n}</span><b>${t}</b><span>${sub}</span></div>
+            <div class="cr-coupon__stub"><span>${stub}</span></div>
+          </div>`).join("")}
+      </div>
+
+      <div class="cr-band"><div class="cr-band__run">
+        ${"<span>тсс… главное правило — тайна</span><span>✦</span><span>никому не говори, кому даришь</span><span>✦</span>".repeat(4)}
+      </div></div>
+      <p class="micro">займёт минуту · участие по желанию</p>
+    `);
+    setMain("УЧАСТВУЮ", () => goStep("wishlist"));
+  }
+
+
+  /* ---------- «Мягкий»: неоморфизм + чуть-чуть новогоднего ---------- */
+  const SF = {
+    bauble: (id, red = true) => `
+      <svg class="sf-bauble" viewBox="0 0 60 92" aria-hidden="true">
+        <defs>
+          <radialGradient id="${id}g" cx="36%" cy="34%" r="70%">
+            <stop offset="0" stop-color="${red ? "#ff8a80" : "#9ec0ff"}"/><stop offset=".45" stop-color="${red ? "#d93a3a" : "#2563eb"}"/><stop offset="1" stop-color="${red ? "#7c1010" : "#0f2f8a"}"/>
+          </radialGradient>
+          <linearGradient id="${id}c" x1="0" x2="1"><stop offset="0" stop-color="#b8892f"/><stop offset=".5" stop-color="#f5d27a"/><stop offset="1" stop-color="#a87a22"/></linearGradient>
+        </defs>
+        <line x1="30" y1="0" x2="30" y2="26" stroke="#9aa3b5" stroke-width="1.2"/>
+        <rect x="23" y="25" width="14" height="9" rx="2" fill="url(#${id}c)"/>
+        <circle cx="30" cy="60" r="27" fill="url(#${id}g)"/>
+        <ellipse cx="21" cy="49" rx="7" ry="4.5" fill="#fff" opacity=".55" transform="rotate(-35 21 49)"/>
+        <path d="M6 62 Q30 72 54 62" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.5"/>
+      </svg>`,
+    garland: () => {
+      const n = 9, pts = [];
+      for (let i = 0; i < n; i++) { const x = 22 + i * (356 / (n - 1)); const t = (x - 200) / 200; pts.push([x, 14 + 30 * (1 - t * t)]); }
+      const cols = ["#1f3a8a", "#c8102e", "#c9ced6"];
+      return `<svg class="sf-garland" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M-10 6 Q200 86 410 6" fill="none" stroke="#8f99ad" stroke-width="1.2"/>
+        ${pts.map(([x, y], i) => `<g class="sf-bulb" style="--d:${(i * .37) % 2}s"><rect x="${x - 2.5}" y="${y - 3}" width="5" height="5" rx="1" fill="#8f99ad"/><ellipse cx="${x}" cy="${y + 8}" rx="4.6" ry="7" fill="${cols[i % 3]}"/><ellipse cx="${x - 1.4}" cy="${y + 5.5}" rx="1.3" ry="2.2" fill="#fff" opacity=".7"/></g>`).join("")}
+      </svg>`;
+    },
+    ring: (big, small, frac) => {
+      const r = 118, c = 2 * Math.PI * r, a = -Math.PI / 2 + frac * 2 * Math.PI;
+      const dx = 150 + r * Math.cos(a), dy = 150 + r * Math.sin(a);
+      return `<div class="sf-ring">
+        <svg viewBox="0 0 300 300" aria-hidden="true">
+          <circle cx="150" cy="150" r="${r}" fill="none" stroke="#d5dae4" stroke-width="9"/>
+          <circle cx="150" cy="150" r="${r}" fill="none" stroke="#1f3a8a" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(c * frac).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 150 150)"/>
+          <circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="10" fill="#1f3a8a" stroke="#eef1f6" stroke-width="5"/>
+        </svg>
+        <div class="sf-ring__in"><b>${big}</b><span>${small}</span></div>
+        <div class="sf-ring__toy" data-tree3d="plain" aria-hidden="true"></div>
+      </div>`;
+    }
+  };
+
+  function renderWelcomeSoft() {
+    const d = daysLeft(G.drawDate);
+    const start = new Date("2026-11-01").getTime(), end = new Date(G.drawDate).getTime();
+    const frac = Math.min(.97, Math.max(.04, (Date.now() - start) / (end - start)));
+    mount(`
+      ${SF.garland()}
+      <div class="sf-head rise" style="--d:0s">
+        <span class="sf-eyebrow">Привет, ${esc(userName)}</span>
+        <h1 class="sf-title">Пора стать Сантой</h1>
+      </div>
+      ${SF.ring(d, plural(d, ["день", "дня", "дней"]) + " до жеребьёвки", frac)}
+      <div class="sf-rows rise" style="--d:.15s">
+        <div class="sf-row"><i class="sf-dot"></i><div><span>Новогодняя игра</span><b>Тайный Санта ${nb("Р-СТРОЙ")}</b></div></div>
+        <div class="sf-row"><div><span>Бюджет подарка</span><b>до ${money(G.budget)}</b></div></div>
+        <div class="sf-row"><div><span>Вручение</span><b>${fmtDate(G.exchangeDate)}, ${G.place}</b></div></div>
+      </div>
+      <p class="sf-meta">${G.participants} ${plural(G.participants, ["коллега", "коллеги", "коллег"])} уже в игре · займёт минуту</p>
+      <details class="sf-how">
+        <summary>Как это работает</summary>
+        <ol>
+          <li><b>Расскажи о желаниях.</b> 2–3 идеи подарка — их увидит только твой Санта.</li>
+          <li><b>Узнай, кому даришь.</b> ${fmtDate(G.drawDate)} придёт сообщение в Telegram.</li>
+          <li><b>Подари подарок до ${money(G.budget)}.</b> ${fmtDate(G.exchangeDate)} ${G.place}. Главное — никому не говорить!</li>
+        </ol>
+      </details>
+    `);
+    setMain("Участвую", () => goStep("wishlist"));
   }
 
   /* =======================================================
@@ -179,7 +335,7 @@
   function renderWishlist() {
     mount(`
       ${masthead()}
-      ${stepper(1, "Твои пожелания")}
+      ${stepper(1, "<b>Р\u2011СТРОЙ</b> собирает пожелания")}
       <h1>О чём ты мечтаешь в этом году?</h1>
       <p class="lead">Напиши 2–3 идеи — каждую с новой строки. Чем конкретнее, тем легче Санте угадать: можно добавить любимый цвет или размер.</p>
 
@@ -193,8 +349,20 @@
           <textarea class="textarea" id="w-not" placeholder="Например: сладкое — аллергия; духи">${esc(state.notWanted)}</textarea>
         </label>
       </div>
-      <p class="hint">${icon("bulb", "i--sm")}После сохранения поменять пожелания можно только через организатора.</p>
+      <div class="chips-wrap">
+        <div class="chips__label">Быстрые идеи — нажми, чтобы добавить</div>
+        <div class="chips" id="chips">${(G.ideas || []).map(t => `<button type="button" class="chip-idea">${esc(t)}</button>`).join("")}</div>
+      </div>
+      <p class="hint">После сохранения поменять пожелания можно только через организатора.</p>
     `);
+    document.getElementById("chips").addEventListener("click", e => {
+      const b = e.target.closest(".chip-idea"); if (!b) return;
+      const ta = document.getElementById("w-wishes");
+      const lines = ta.value.split("\n").map(x => x.trim()).filter(Boolean);
+      if (!lines.includes(b.textContent)) lines.push(b.textContent);
+      ta.value = lines.join("\n");
+      b.classList.add("is-on"); haptic("light");
+    });
 
     setMain("Следующий шаг", () => {
       const wishes = document.getElementById("w-wishes").value.trim();
@@ -215,26 +383,35 @@
     const d = daysLeft(G.drawDate);
     mount(`
       ${masthead()}
-      ${stepper(2, "Ждём жеребьёвку")}
+      ${stepper(2, "<b>Р\u2011СТРОЙ</b> ждёт жеребьёвку")}
       <div class="bigstate">
-        <div class="bigstate__ic">${icon("check")}</div>
-        <h1>Отлично! Ты всё делаешь правильно ✨</h1>
+        ${bigMark()}
+        <h1>Отлично! Ты всё делаешь правильно</h1>
         <p class="lead">Твои пожелания уже у Санты. <b>${fmtDate(G.drawDate)}</b>${d ? ` (через ${d} ${plural(d, ["день", "дня", "дней"])})` : ""} придёт сообщение, кому даришь ты. А пока можно присматриваться к идеям и ждать чуда.</p>
       </div>
 
       ${state.wishes ? `<div class="section">
         <div class="section__head"><span class="section__title">Твои пожелания</span></div>
-        <div class="paper">
+        ${CR ? crList(lines(state.wishes), state.notWanted) : `<div class="paper">
           ${lines(state.wishes).map((w, i) => `<div class="wish"><div class="wish__num">${String(i + 1).padStart(2, "0")}</div><div class="wish__body">${esc(w)}</div></div>`).join("")}
-          ${state.notWanted ? `<div class="kv"><div class="kv__k">${icon("ban", "i--sm")}Не дарить</div><div class="kv__v">${esc(state.notWanted)}</div></div>` : ""}
-        </div>
+          ${state.notWanted ? `<div class="kv"><div class="kv__k">Не дарить</div><div class="kv__v">${esc(state.notWanted)}</div></div>` : ""}
+        </div>`}
       </div>` : ""}
 
-      <div class="section">${facts()}</div>
-      <p class="hint">${icon("help", "i--sm")}Нужно что-то поменять — напиши организатору игры.</p>
+      <div class="section">${CR ? crTicket() : facts()}</div>
+      <p class="hint">Нужно что-то поменять — напиши организатору игры.</p>
 
-      <button class="demo-link" id="demo-draw">Демо: показать, что будет после жеребьёвки</button>
+      <div class="section invite-cta">
+        <p>Чем больше коллег в игре — тем интереснее. Позови тех, кто ещё не знает.</p>
+        <button type="button" class="btn btn--ghost-ink btn--block" id="share">Позвать коллегу</button>
+      </div>
+
+      <button class="demo-link${CR ? " cr-link" : ""}" id="demo-draw">Демо: показать, что будет после жеребьёвки</button>
     `);
+    document.getElementById("share").onclick = () => {
+      const url = "https://t.me/share/url?url=" + encodeURIComponent("https://t.me/SecretRGameBot/santa") + "&text=" + encodeURIComponent("Я уже в Тайном Санте Р-СТРОЙ! Присоединяйся — займёт минуту ✨");
+      inTelegram ? tg.openTelegramLink(url) : window.open(url, "_blank");
+    };
     document.getElementById("demo-draw").onclick = () => goStep("reveal");
     if (inTelegram) setMain("Закрыть", () => tg.close()); else hideMain();
   }
@@ -244,9 +421,10 @@
      ======================================================= */
   function renderReveal() {
     const r = G.demoRecipient;
+    if (THEME === "ice" || THEME === "chrome" || THEME === "soft") return renderMelt(r);
     mount(`
       ${masthead()}
-      ${stepper(3, "Кому ты даришь")}
+      ${stepper(3, "<b>Р\u2011СТРОЙ</b> тянет жребий")}
       <div class="draw">
         <h1>Жеребьёвка прошла!</h1>
         <p class="lead" style="text-align:center">Имена перемешаны и разлетелись по адресам. Нажми кнопку — узнаешь, для кого ты Санта в этом году.</p>
@@ -275,10 +453,37 @@
     setMain("Узнать, кому я дарю", open);
   }
 
+
+  function renderMelt(r) {
+    mount(`
+      ${masthead()}
+      ${stepper(3, "<b>Р\u2011СТРОЙ</b> тянет жребий")}
+      <h1>Жеребьёвка прошла!</h1>
+      <p class="lead">Имя твоего подопечного спрятано подо льдом. Растопи его.</p>
+      <div class="melt" id="melt">
+        <div class="melt__photo"></div>
+        <div class="melt__name">
+          <div class="melt__eyebrow">Ты — Тайный Санта для</div>
+          <div class="melt__who">${esc(r.name.split(" ")[0])}<br><em>${esc(r.name.split(" ").slice(1).join(" "))}</em></div>
+          <div class="melt__dept">${esc(r.dept)}</div>
+        </div>
+        <div class="melt__frost"></div>
+      </div>
+    `);
+    const melt = document.getElementById("melt");
+    const open = () => {
+      if (melt.classList.contains("is-melted")) return;
+      melt.classList.add("is-melted"); haptic("success"); confetti();
+      setMain("Что хочет получить?", () => goStep("recipient"));
+    };
+    melt.addEventListener("click", open);
+    setMain("Растопить лёд", open);
+  }
+
   function confetti() {
     const box = document.createElement("div");
     box.className = "confetti";
-    const colors = ["#b3261e", "#ecd9a8", "#f3f4f8", "#2a3d72", "#d23a2f"];
+    const colors = THEME === "soft" ? ["#1f3a8a", "#c8102e", "#c9ced6", "#ffffff", "#8fa2c8"] : THEME === "chrome" ? ["#0b1690", "#c9ced6", "#ffffff", "#111111", "#7d8796"] : THEME === "ice" ? ["#ffffff", "#dbe7f5", "#b9cbe3", "#1c2a4a", "#eef4fb"] : ["#b3261e", "#ecd9a8", "#f3f4f8", "#2a3d72", "#d23a2f"];
     for (let i = 0; i < 70; i++) {
       const p = document.createElement("i");
       p.style.left = Math.random() * 100 + "%";
@@ -296,6 +501,29 @@
      ======================================================= */
   function recipientCard() {
     const r = G.demoRecipient;
+    if (CR) return `
+      <div class="cr-ticket cr-ticket--who">
+        <div class="cr-ticket__body">
+          <span class="cr-pill cr-pill--dark">ты — тайный санта для</span>
+          <h2 class="cr-who">${esc(r.name)}</h2>
+          <em>${esc(r.dept)}</em>
+        </div>
+        <div class="cr-coupon__stub"><span>подопечный</span></div>
+      </div>
+      <div class="section">
+        <div class="section__head"><span class="section__title">что ${esc(r.name.split(" ")[0])} хочет получить</span></div>
+        ${crList(r.wishes, r.notWanted)}
+      </div>
+      <div class="section cr-tips">
+        <div class="cr-tips__h">подсказки санте</div>
+        <ol>
+          <li><i>01</i><span>Перечитай пожелания ещё раз перед покупкой</span></li>
+          <li><i>02</i><span>Держись бюджета — до ${money(G.budget)}</span></li>
+          <li><i>03</i><span>Подпиши «Для ${esc(r.forName || r.name.split(" ")[0])}», свою подпись не ставь</span></li>
+          <li><i>04</i><span>Вручи ${fmtDate(G.exchangeDate)} ${G.place}</span></li>
+        </ol>
+      </div>
+      ${crBand(`тсс… это секрет до ${fmtDate(G.exchangeDate)}`)}`;
     return `
       <div class="doc-head recipient">
         <div class="eyebrow">Ты — Тайный Санта для</div>
@@ -307,23 +535,23 @@
         <div class="section__head"><span class="section__title">Что ${esc(r.name.split(" ")[0])} хочет получить</span></div>
         <div class="paper">
           ${r.wishes.map((w, i) => `<div class="wish"><div class="wish__num">${String(i + 1).padStart(2, "0")}</div><div class="wish__body">${esc(w)}</div></div>`).join("")}
-          ${r.notWanted ? `<div class="kv"><div class="kv__k" style="color:var(--red)">${icon("ban", "i--sm")}Не дарить</div><div class="kv__v">${esc(r.notWanted)}</div></div>` : ""}
+          ${r.notWanted ? `<div class="kv"><div class="kv__k" style="color:var(--red)">Не дарить</div><div class="kv__v">${esc(r.notWanted)}</div></div>` : ""}
         </div>
       </div>
       <div class="section">
         <div class="section__head"><span class="section__title">Подсказки Санте</span></div>
         <div class="paper">
-          <div class="fact"><span class="fact__ic">${icon("list")}</span><span>Перечитай пожелания ещё раз перед покупкой</span></div>
-          <div class="fact"><span class="fact__ic">${icon("wallet")}</span><span>Держись бюджета — до ${money(G.budget)}</span></div>
-          <div class="fact"><span class="fact__ic">${icon("gift")}</span><span>Подпиши «Для ${esc(r.forName || r.name.split(" ")[0])}», свою подпись не ставь</span></div>
-          <div class="fact"><span class="fact__ic">${icon("calendar")}</span><span>Вручи ${fmtDate(G.exchangeDate)} ${G.place}</span></div>
+          <div class="fact fact--n"><span class="fact__n">01</span><span>Перечитай пожелания ещё раз перед покупкой</span></div>
+          <div class="fact fact--n"><span class="fact__n">02</span><span>Держись бюджета — до ${money(G.budget)}</span></div>
+          <div class="fact fact--n"><span class="fact__n">03</span><span>Подпиши «Для ${esc(r.forName || r.name.split(" ")[0])}», свою подпись не ставь</span></div>
+          <div class="fact fact--n"><span class="fact__n">04</span><span>Вручи ${fmtDate(G.exchangeDate)} ${G.place}</span></div>
         </div>
       </div>
-      <div class="section note">${icon("secret")}<div><b>Тсс… это секрет до ${fmtDate(G.exchangeDate)}.</b></div></div>`;
+      <div class="section note"><div><b>Тсс… это секрет до ${fmtDate(G.exchangeDate)}.</b></div></div>`;
   }
 
   function renderRecipient() {
-    mount(`${masthead()}${stepper(3, "Твой подопечный")}<h1 class="screen-title">Время выбирать подарок!</h1>${recipientCard()}`);
+    mount(`${masthead()}${stepper(3, "<b>Р\u2011СТРОЙ</b> выбирает подарки")}<h1 class="screen-title">Время выбирать подарок!</h1>${recipientCard()}`);
     setMain("Подарок куплен!", () =>
       confirmDialog("Отметить, что подарок куплен?", () => { haptic("success"); goStep("done"); }, "Да, куплен", "Пока нет"));
   }
@@ -335,9 +563,9 @@
     mount(`
       ${masthead()}
       <div class="bigstate">
-        <div class="bigstate__ic">${icon("gift")}</div>
+        ${THEME === "gift" && window.ART.giftBox3d ? `<div class="gx-done">${window.ART.giftBox3d("gxd")}</div>` : bigMark()}
         <h1>Ура! Подарок готов!</h1>
-        <p class="lead">Ты молодец! <b>${fmtDate(G.exchangeDate)}</b> положи подарок под ёлку ${G.place}. Скоро и тебя найдёт сюрприз от твоего Санты.</p>
+        <p class="lead">Ты <span class="praise">молодец</span>! <b>${fmtDate(G.exchangeDate)}</b> положи подарок под ёлку ${G.place}. Скоро и тебя найдёт сюрприз от твоего Санты.</p>
       </div>
       ${recipientCard()}
     `);

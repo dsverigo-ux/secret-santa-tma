@@ -402,7 +402,115 @@
 </svg>`;
   })();
 
-  window.ART.heroes = { retro, neon, velvet, minimal, cozy, crystal }; // в «Северном сиянии» — основная иллюстрация
+
+  /* ---------- 10. Окно-ёлка: плоский синий фон, сквозь вырез — живое боке и гирлянда ---------- */
+  const treeWindow = (() => {
+    // псевдослучайные, но стабильные позиции огней
+    let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    const colors = ["#ffd78a", "#ffbf5e", "#fff1cf", "#ffcf7a", "#ff9f4a"];
+    const bokeh = Array.from({ length: 22 }, (_, i) => {
+      const size = 18 + rnd() * 58, blur = 2 + rnd() * 9;
+      return `<i style="left:${(rnd() * 100).toFixed(1)}%;top:${(rnd() * 100).toFixed(1)}%;width:${size.toFixed(0)}px;height:${size.toFixed(0)}px;` +
+        `background:${colors[i % colors.length]};filter:blur(${blur.toFixed(1)}px);opacity:${(.35 + rnd() * .55).toFixed(2)};` +
+        `animation-duration:${(6 + rnd() * 8).toFixed(1)}s, ${(2 + rnd() * 3).toFixed(1)}s;animation-delay:${(-rnd() * 8).toFixed(1)}s, ${(-rnd() * 3).toFixed(1)}s"></i>`;
+    }).join("");
+    // спиральная гирлянда: один «виток» шириной 100 единиц, повторяется — при сдвиге кажется, что ёлка вращается
+    const turn = (dx) => {
+      // спираль: синусоида с наклоном — период 100, шаг витков 15, поэтому рисунок бесшовно повторяется
+      let d = "", bl = "";
+      for (let k = -1; k < 8; k++) {
+        const y0 = k * 15;
+        const pts = [];
+        for (let x = 0; x <= 100; x += 5) pts.push(`${dx + x} ${(y0 + 4.5 * Math.cos(2 * Math.PI * x / 100) + x * .15).toFixed(2)}`);
+        d += `M${pts.join(" L")} `;
+        [10, 30, 50, 70, 90].forEach((x, j) => {
+          const front = Math.cos(2 * Math.PI * x / 100);           // ближняя сторона ярче
+          const yy = y0 + 4.5 * front + x * .15;
+          bl += `<circle cx="${dx + x}" cy="${yy.toFixed(1)}" r="${(1.2 + .6 * (1 - front) / 2).toFixed(2)}" fill="${["#fff6dc", "#ffd78a", "#ffe9b8"][(j + k + 9) % 3]}" class="tw-bulb" style="animation-delay:${(((j * 3 + k + 9) * .21) % 2).toFixed(2)}s"/>`;
+        });
+      }
+      return `<path d="${d}" fill="none" stroke="#c9b48a" stroke-width=".45" opacity=".85"/>${bl}`;
+    };
+    return `
+<div class="tw" role="img" aria-label="Вращающаяся ёлка-окно: сквозь вырез в синем фоне видны тёплые огни и гирлянда">
+  <div class="tw__window">
+    <div class="tw__bokeh">${bokeh}</div>
+    <svg class="tw__spin" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true">${turn(0)}${turn(100)}</svg>
+    <div class="tw__shade"></div>
+  </div>
+  <svg class="tw__star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.6l-6.4 3.5 1.4-7.1-5.3-5 7.2-.9z"/></svg>
+</div>`;
+  })();
+
+  /* ---------- 12. Подарок: объёмная белая коробка с красной атласной лентой + красный диск ---------- */
+  const giftBox3d = (id, scale = 1) => `
+<svg viewBox="0 0 360 260" class="gx-box" style="--s:${scale}" aria-hidden="true">
+  <defs>
+    <linearGradient id="${id}t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#eeeeee"/></linearGradient>
+    <linearGradient id="${id}l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6e6e6"/><stop offset="1" stop-color="#d2d2d2"/></linearGradient>
+    <linearGradient id="${id}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7f7f7"/><stop offset="1" stop-color="#e3e3e3"/></linearGradient>
+    <linearGradient id="${id}sat" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7d0d12"/><stop offset=".3" stop-color="#c8222a"/><stop offset=".48" stop-color="#ff6a66"/>
+      <stop offset=".62" stop-color="#d12a30"/><stop offset="1" stop-color="#7a0b10"/>
+    </linearGradient>
+    <linearGradient id="${id}band" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a5161c"/><stop offset=".5" stop-color="#e2383b"/><stop offset="1" stop-color="#a5161c"/></linearGradient>
+    <clipPath id="${id}top"><path d="M180 70L290 115 180 160 70 115z"/></clipPath>
+    <filter id="${id}sh" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9"/></filter>
+  </defs>
+  <ellipse cx="185" cy="236" rx="120" ry="18" fill="#000" opacity=".18" filter="url(#${id}sh)"/>
+  <path d="M70 115L180 160V240L70 195z" fill="url(#${id}l)"/>
+  <path d="M180 160L290 115V195L180 240z" fill="url(#${id}r)"/>
+  <path d="M180 70L290 115 180 160 70 115z" fill="url(#${id}t)"/>
+  <!-- ленты по бокам -->
+  <path d="M114 133L136 142V222L114 213z" fill="url(#${id}band)"/>
+  <path d="M224 142L246 133V213L224 222z" fill="url(#${id}band)"/>
+  <!-- ленты сверху -->
+  <g clip-path="url(#${id}top)" stroke-width="22">
+    <path d="M125 92.5L235 137.5" stroke="url(#${id}band)"/>
+    <path d="M235 92.5L125 137.5" stroke="url(#${id}band)"/>
+  </g>
+  <path d="M180 160V240" stroke="#ffffff" stroke-width="1" opacity=".6"/>
+  <!-- хвосты банта -->
+  <path d="M172 120L140 176l11-4 6 11 30-61z" fill="url(#${id}sat)"/>
+  <path d="M188 120l34 54-11-3-5 11-32-58z" fill="url(#${id}sat)"/>
+  <!-- петли банта -->
+  <path d="M180 113C132 64 88 96 122 124c18 14 44 6 58-8z" fill="url(#${id}sat)"/>
+  <path d="M180 113c48-49 92-17 58 11-18 14-44 6-58-8z" fill="url(#${id}sat)"/>
+  <path d="M176 113c-22-20-44-18-46-4 10-8 28-6 46 8z" fill="#6e0a0e" opacity=".55"/>
+  <path d="M184 113c22-20 44-18 46-4-10-8-28-6-46 8z" fill="#6e0a0e" opacity=".55"/>
+  <path d="M128 98c10-10 24-10 34-2" fill="none" stroke="#ffb3ae" stroke-width="2.2" stroke-linecap="round" opacity=".7"/>
+  <path d="M206 92c12-6 26-4 32 6" fill="none" stroke="#ffb3ae" stroke-width="2.2" stroke-linecap="round" opacity=".7"/>
+  <ellipse cx="180" cy="116" rx="14" ry="11" fill="url(#${id}sat)"/>
+  <ellipse cx="176" cy="112" rx="5" ry="3" fill="#ffc2bd" opacity=".6"/>
+</svg>`;
+
+  const gift = `
+<div class="gx" role="img" aria-label="Белая коробка с красной атласной лентой и большой красный круг с надписью Тайный Санта">
+  ${giftBox3d("gxa")}
+  <div class="gx-disc">
+    <span class="gx-disc__script">Тайный</span>
+    <span class="gx-disc__title">САНТА</span>
+    <span class="gx-disc__sub">Р-СТРОЙ · Новый год 2027</span>
+  </div>
+</div>`;
+
+
+  /* ---------- 13. Лёд: настоящая макрофотография снежинки (Unsplash) ---------- */
+  const icePhotos = {
+    1: { src: "img/snow-1.jpg", pos: "63% 46%", credit: "Фото: Aaron Burden / Unsplash" },
+    2: { src: "img/snow-2.jpg", pos: "62% 52%", credit: "Фото: Carmen Keuper / Unsplash" }
+  };
+  const iceP = icePhotos[new URLSearchParams(location.search).get("photo")] || icePhotos[1];
+  try { document.addEventListener("DOMContentLoaded", () => { const a = document.getElementById("app"); if (a && document.documentElement.dataset.theme === "ice") a.dataset.credit = iceP.credit; }); document.documentElement.style.setProperty("--ice-photo", `url("${new URL(iceP.src, location.href).href}")`); document.documentElement.style.setProperty("--ice-pos", iceP.pos); } catch (e) {}
+  const ice = `
+<div class="ice-hero">
+  <img src="${iceP.src}" alt="Настоящая снежинка крупным планом" style="object-position:${iceP.pos}">
+  <div class="ice-hero__top"><span>Р-СТРОЙ</span><span>{{date}}</span></div>
+  <div class="ice-hero__title">Тайный<br><em>Санта</em></div>
+</div>`;
+
+  window.ART.heroes = { retro, neon, velvet, minimal, cozy, crystal, window: treeWindow, gift, ice };
+  window.ART.giftBox3d = giftBox3d; // в «Северном сиянии» — основная иллюстрация
   window.ART.heroAurora = aurora;
   window.ART.mini = mini;
 })();
