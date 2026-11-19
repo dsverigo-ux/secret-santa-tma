@@ -1241,3 +1241,7 @@
 .sf-badge__tree { width: 120px; height: 132px; }
 [data-theme="soft"] .sf-dot { background: var(--s-red); box-shadow: 0 4px 10px rgba(200, 16, 46, .35); }
 [data-theme="soft"] .melt__photo { background: radial-gradient(90% 80% at 50% 35%, #4a64b8 0%, #1f3a8a 55%, #101f52 100%); }
+/* светлая тень карточки не должна «засвечивать» заголовок */
+[data-theme="soft"] .screen-title { margin-bottom: 30px; position: relative; z-index: 1; }
+[data-theme="soft"] .section__title, [data-theme="soft"] .section__head { position: relative; z-index: 1; }
+[data-theme="soft"] .section__head { margin-bottom: 18px; }

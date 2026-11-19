@@ -125,7 +125,7 @@
   }
 
   if (THEME === "chrome" || THEME === "soft") {
-    const m = document.createElement("script"); m.type = "module"; m.src = "js/tree3d.js?v=26"; document.head.appendChild(m);
+    const m = document.createElement("script"); m.type = "module"; m.src = "js/tree3d.js?v=27"; document.head.appendChild(m);
   }
   const mount = html => {
     $app.innerHTML = `<section class="screen simple">${html}</section>`; window.scrollTo(0, 0);
@@ -565,7 +565,7 @@
       <div class="bigstate">
         ${THEME === "gift" && window.ART.giftBox3d ? `<div class="gx-done">${window.ART.giftBox3d("gxd")}</div>` : bigMark()}
         <h1>Ура! Подарок готов!</h1>
-        <p class="lead">Ты <span class="praise">молодец</span>! <b>${fmtDate(G.exchangeDate)}</b> положи подарок под ёлку ${G.place}. Скоро и тебя найдёт сюрприз от твоего Санты.</p>
+        <p class="lead">Ты молодец! <b>${fmtDate(G.exchangeDate)}</b> положи подарок под ёлку ${G.place}. Скоро и тебя найдёт сюрприз от твоего Санты.</p>
       </div>
       ${recipientCard()}
     `);
